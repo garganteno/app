@@ -3,7 +3,7 @@ import streamlit as st
 # Configuración de página
 st.set_page_config(page_title="Simulador Salarial Pro", layout="centered")
 
-# Estilo de Alto Contraste para Móvil
+# Estilo de Máximo Contraste para Móvil
 st.markdown("""
     <style>
     .stApp { background: #0a0f1e; }
@@ -25,7 +25,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<p class="titulo">📊 CONVENIO 2026-2029 (ÚLTIMO TRAMO)</p>', unsafe_allow_html=True)
+st.markdown('<p class="titulo">📊 SIMULADOR CONVENIO 2026-2029</p>', unsafe_allow_html=True)
 
 with st.expander("⚙️ DATOS DE ENTRADA", expanded=True):
     c1, c2 = st.columns(2)
@@ -38,8 +38,7 @@ with st.expander("⚙️ DATOS DE ENTRADA", expanded=True):
     cat = st.selectbox("Categoría", ["Cajer@/Reponedor", "Asistent@ / Oficial", "Adjunt@", "Gt"])
     vista = st.selectbox("Proyectar hasta:", ["2026", "2027", "2028", "2029", "COMPLETO"])
 
-if st.button("🚀 CALCULAR CON REBASE REAL"):
-    # Tramos Base 2026
+if st.button("🚀 CALCULAR CON REBASE GARANTIZADO"):
     tramos_base = {
         "Cajer@/Reponedor": [18800, 19800, 21000],
         "Asistent@ / Oficial": [21000, 22000, 23000],
@@ -57,51 +56,45 @@ if st.button("🚀 CALCULAR CON REBASE REAL"):
     p_acum = p_act
 
     for anio in anios:
-        # Valores del año anterior para cálculos
+        # 1. Referencias año anterior
         h_ref_ant = h_an_ant if anio == 2026 else h_an_new
         p_prev = p_acum
         a_prev = p_prev * h_ref_ant
         m_prev = a_prev / pagas
         
-        # Parámetros del año actual
+        # 2. Configuración de subidas
         fijo = 1.04 if anio == 2026 else 1.03
-        mano_alzada = 0.02 if anio == 2026 else 0.015
+        mano_alzada_pct = 0.02 if anio == 2026 else 0.015
         
-        # Tramos del año actual: Solo el último sube el 3% anual acumulado
+        # 3. Tramos (Solo el último sube el 3% anual acumulado)
         tramos_anio = tramos_base[cat].copy()
         inc_ultimo = 1.03 ** (anio - 2026)
         tramos_anio[-1] = tramos_anio[-1] * inc_ultimo
         ultimo_tramo_ajustado = tramos_anio[-1] * f_jornada
         
-        n_anual = 0
-        p_u = 0.0
-
-        # LÓGICA DE REBASE MEJORADA:
-        # Si el salario actual (ajustado a la nueva jornada) ya es >= al último tramo
+        # 4. LÓGICA DE REBASE PARA ADJUNTOS Y ÚLTIMOS TRAMOS
         salario_actual_en_nueva_jornada = p_prev * h_an_new
         
-        if salario_actual_en_nueva_jornada >= ultimo_tramo_ajustado:
-            # REBASE DIRECTO: Sube el % en nómina y cobra el % a mano alzada
+        # Si el salario ya es >= al último tramo (antes de la subida anual)
+        if salario_actual_en_nueva_jornada >= (ultimo_tramo_ajustado - 1): # -1 por margen de redondeo
             n_anual = salario_actual_en_nueva_jornada * fijo
-            p_u = a_prev * mano_alzada
+            p_u = a_prev * mano_alzada_pct
         else:
-            # Búsqueda de tramos o subida fija
-            subida_fija_proyectada = salario_actual_en_nueva_jornada * fijo
+            # Búsqueda en tramos intermedios
+            subida_fija = salario_actual_en_nueva_jornada * fijo
             
-            if subida_fija_proyectada >= ultimo_tramo_ajustado:
-                # Si la subida le hace saltar al último tramo o superarlo
-                n_anual = subida_fija_proyectada
-                p_u = a_prev * mano_alzada
+            if subida_fija >= ultimo_tramo_ajustado:
+                n_anual = subida_fija
+                p_u = a_prev * mano_alzada_pct
             else:
-                # Buscar tramo intermedio
                 encontrado = False
                 for t in tramos_anio:
                     t_aj = t * f_jornada
-                    if subida_fija_proyectada < t_aj:
+                    if subida_fija < t_aj:
                         n_anual = t_aj
                         encontrado = True
                         break
-                if not encontrado: n_anual = subida_fija_proyectada
+                if not encontrado: n_anual = subida_fija
 
         p_acum = n_anual / h_an_new
         m_new = n_anual / pagas
@@ -117,20 +110,20 @@ if st.button("🚀 CALCULAR CON REBASE REAL"):
                 <div class="grid-datos">
                     <div class="col-dato">
                         <p class="label-dato">Precio Hora</p>
-                        <span class="val-old">Antes: {p_prev:.2f} €</span>
+                        <span class="val-old">Anterior: {p_prev:.2f} €</span>
                         <span class="val-new">{p_acum:.2f} €</span>
                     </div>
                     <div class="col-dato">
                         <p class="label-dato">Mensual ({pagas} pagas)</p>
-                        <span class="val-old">Antes: {m_prev:,.2f} €</span>
+                        <span class="val-old">Anterior: {m_prev:,.2f} €</span>
                         <span class="val-new">{m_new:,.2f} €</span>
                     </div>
                     <div class="col-dato">
-                        <p class="label-dato">Anual Bruto</p>
-                        <span class="val-old">Antes: {a_prev:,.2f} €</span>
+                        <p class="label-dato">Bruto Anual</p>
+                        <span class="val-old">Anterior: {a_prev:,.2f} €</span>
                         <span class="val-new">{n_anual:,.2f} €</span>
                     </div>
                 </div>
-                {f'<div class="pago-mano">💰 PAGO A MANO ALZADA ({int(mano_alzada*100)}% + {fijo*100-100}% Nómina): {p_u:,.2f} €</div>' if p_u > 0 else ""}
+                {f'<div class="pago-mano">💰 PAGO A MANO ALZADA ({int(mano_alzada_pct*1000)/10}%): {p_u:,.2f} €</div>' if p_u > 0 else ""}
             </div>
         """, unsafe_allow_html=True)
