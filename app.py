@@ -4,35 +4,41 @@ from datetime import datetime
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29 Pro", layout="centered")
 
-# BLOQUEO AGRESIVO DE ICONOS DE SISTEMA
+# BLOQUEO TOTAL "MODO KIOSCO" - ELIMINA CUENTA E ICONOS
 st.markdown("""
     <style>
-    /* Ocultar barra superior, menú lateral y footer de Streamlit */
-    [data-testid="stHeader"], 
-    [data-testid="stSidebarNav"],
-    [data-testid="stToolbar"],
-    [data-testid="stDecoration"],
-    [data-testid="stStatusWidget"],
-    footer, 
-    header {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
+    /* 1. OCULTAR BARRA SUPERIOR E ICONO DE USUARIO */
+    [data-testid="stHeader"] {display: none !important;}
+    header {visibility: hidden !important;}
+    
+    /* 2. OCULTAR MENÚ DE OPCIONES (HAMBURGUESA) */
+    #MainMenu {visibility: hidden !important;}
+    
+    /* 3. OCULTAR FOOTER Y BOTONES DE DEPLOY */
+    footer {visibility: hidden !important;}
+    .stDeployButton {display:none !important;}
+    
+    /* 4. OCULTAR ICONOS DE ESTADO Y AJUSTES ABAJO A LA DERECHA */
+    [data-testid="stStatusWidget"] {display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    
+    /* 5. ELIMINAR CUALQUIER MARGEN DE SISTEMA */
+    .stApp {
+        background: #0a0f1e;
+        margin-top: -60px; /* Sube la app para tapar el hueco de la barra */
+        padding-top: 0px !important;
     }
 
-    /* Ocultar el botón de 'Deploy' y el menú de hamburguesa */
-    .stDeployButton, #MainMenu {
-        display: none !important;
-    }
-
-    /* Estilo de la aplicación (Alto Impacto) */
-    .stApp { background: #0a0f1e; padding-top: 0px; }
+    /* ESTILO DE LA APLICACIÓN (ALTO IMPACTO) */
     .titulo { text-align: center; color: #ffffff; font-size: 26px; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; }
     label { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; }
     .card-anio { background: #1e293b; border: 1px solid #475569; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
-    .val-new { color: #ffffff; font-size: 20px; font-weight: 800; display: block; }
+    .grid-datos { display: flex; flex-direction: column; gap: 12px; }
+    @media (min-width: 600px) { .grid-datos { flex-direction: row; justify-content: space-between; } .col-dato { flex: 1; } }
     .col-dato { background: #0f172a; padding: 12px; border-radius: 10px; border-left: 4px solid #3b82f6; }
     .label-dato { color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+    .val-new { color: #ffffff; font-size: 20px; font-weight: 800; display: block; }
     .pago-mano { background: rgba(245, 158, 11, 0.15); border: 1px dashed #f59e0b; color: #fbbf24; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; font-weight: 700; }
     .stButton>button { width: 100%; background-color: #2563eb !important; color: white !important; font-weight: bold !important; height: 50px; border-radius: 10px; }
     div[data-testid="stMarkdownContainer"] p { color: #ffffff !important; }
@@ -75,7 +81,7 @@ if st.session_state.seccion == 'menu':
 
 elif st.session_state.seccion == 'subida':
     st.markdown(f'<p class="titulo">📈 PROYECCIÓN: {st.session_state.nombre}</p>', unsafe_allow_html=True)
-    if st.button("⬅️ VOLVER AL MENÚ", key="back_top"): st.session_state.seccion = 'menu'; st.rerun()
+    if st.button("⬅️ VOLVER AL MENÚ", key="up"): st.session_state.seccion = 'menu'; st.rerun()
     
     with st.expander("⚙️ CONFIGURACIÓN", expanded=True):
         p_act = st.number_input("Precio Hora Actual (€)", value=10.00, format="%.2f")
@@ -92,15 +98,15 @@ elif st.session_state.seccion == 'subida':
         p_acum = p_act
         
         m_ant_real = (p_act * h_an_ant) / pagas
-        informe_txt = f"INFORME SALARIAL PRO - {st.session_state.nombre.upper()}\n"
-        informe_txt += f"MENSUAL ANTIGUO: {m_ant_real:,.2f} € bruto\n"
-        informe_txt += "="*40 + "\n"
+        informe_txt = f"MENSUAL ANTIGUO: {m_ant_real:,.2f} € bruto\n"
+        informe_txt += f"INFORME SALARIAL PRO - {st.session_state.nombre.upper()}\n" + "="*40 + "\n"
 
         for anio in range(2026, limite + 1):
             h_ref = h_an_ant if anio == 2026 else h_an_new
             p_prev = p_acum
             a_prev, m_prev = p_prev * h_ref, (p_prev * h_ref) / pagas
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
+            
             tramos_anio = TRAMOS_BASE[cat].copy()
             tramos_anio[-1] *= (1.03 ** (anio - 2026))
             sal_fijo = (p_prev * h_an_new) * fijo
@@ -128,7 +134,7 @@ elif st.session_state.seccion == 'subida':
             informe_txt += f"AÑO {anio}: {p_acum:.2f}€/h | Mensual Bruto: {m_new:,.2f}€ | Pago Extra: {p_u:,.2f}€\n"
 
         st.download_button("💾 GRABAR INFORME (.TXT)", informe_txt, file_name=f"informe_{st.session_state.nombre}.txt")
-        if st.button("⬅️ VOLVER AL MENÚ", key="back_bot"): st.session_state.seccion = 'menu'; st.rerun()
+        if st.button("⬅️ VOLVER AL MENÚ", key="down"): st.session_state.seccion = 'menu'; st.rerun()
 
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -144,7 +150,6 @@ elif st.session_state.seccion == 'atrasos':
         p_n = motor_2026(p_ant_atr, h_sem_atr, cat_atr)
         total = (p_n - p_ant_atr) * h_mens * (MESES.index(mes_h) + 1)
         st.markdown(f'<div class="card-anio"><span class="val-new">TOTAL ATRASOS: {total:,.2f} € bruto</span></div>', unsafe_allow_html=True)
-        if st.button("⬅️ VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">SESIÓN FINALIZADA</p>', unsafe_allow_html=True)
