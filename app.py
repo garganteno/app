@@ -4,38 +4,36 @@ from datetime import datetime
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29 Pro", layout="centered")
 
-# BLOQUEO TOTAL "MODO KIOSCO" - ELIMINA CUENTA E ICONOS
+# --- BLOQUEO TOTAL POR JAVASCRIPT Y CSS (NIVEL SISTEMA) ---
 st.markdown("""
-    <style>
-    /* 1. OCULTAR BARRA SUPERIOR E ICONO DE USUARIO */
-    [data-testid="stHeader"] {display: none !important;}
-    header {visibility: hidden !important;}
-    
-    /* 2. OCULTAR MENÚ DE OPCIONES (HAMBURGUESA) */
-    #MainMenu {visibility: hidden !important;}
-    
-    /* 3. OCULTAR FOOTER Y BOTONES DE DEPLOY */
-    footer {visibility: hidden !important;}
-    .stDeployButton {display:none !important;}
-    
-    /* 4. OCULTAR ICONOS DE ESTADO Y AJUSTES ABAJO A LA DERECHA */
-    [data-testid="stStatusWidget"] {display: none !important;}
-    [data-testid="stToolbar"] {display: none !important;}
-    [data-testid="stDecoration"] {display: none !important;}
-    
-    /* 5. ELIMINAR CUALQUIER MARGEN DE SISTEMA */
-    .stApp {
-        background: #0a0f1e;
-        margin-top: -60px; /* Sube la app para tapar el hueco de la barra */
-        padding-top: 0px !important;
+    <script>
+    // Función para eliminar elementos de cuenta y sistema de raíz
+    function cleanUI() {
+        const selectors = [
+            'header', 'footer', '#MainMenu', '.stDeployButton', 
+            '[data-testid="stToolbar"]', '[data-testid="stDecoration"]',
+            '[data-testid="stStatusWidget"]', '#viewerBadge',
+            '.viewerBadge_container__1QSob', 'button[title="View source"]'
+        ];
+        selectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => el.remove());
+        });
     }
-
-    /* ESTILO DE LA APLICACIÓN (ALTO IMPACTO) */
+    // Ejecutar cada segundo para evitar que vuelvan a aparecer
+    setInterval(cleanUI, 1000);
+    </script>
+    
+    <style>
+    /* Refuerzo por CSS para ocultar todo */
+    [data-testid="stHeader"], [data-testid="stToolbar"], header, footer {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    .stApp { background: #0a0f1e; padding-top: 0px !important; }
     .titulo { text-align: center; color: #ffffff; font-size: 26px; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; }
     label { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; }
     .card-anio { background: #1e293b; border: 1px solid #475569; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
-    .grid-datos { display: flex; flex-direction: column; gap: 12px; }
-    @media (min-width: 600px) { .grid-datos { flex-direction: row; justify-content: space-between; } .col-dato { flex: 1; } }
     .col-dato { background: #0f172a; padding: 12px; border-radius: 10px; border-left: 4px solid #3b82f6; }
     .label-dato { color: #94a3b8; font-size: 11px; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
     .val-new { color: #ffffff; font-size: 20px; font-weight: 800; display: block; }
@@ -106,7 +104,6 @@ elif st.session_state.seccion == 'subida':
             p_prev = p_acum
             a_prev, m_prev = p_prev * h_ref, (p_prev * h_ref) / pagas
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
-            
             tramos_anio = TRAMOS_BASE[cat].copy()
             tramos_anio[-1] *= (1.03 ** (anio - 2026))
             sal_fijo = (p_prev * h_an_new) * fijo
@@ -124,8 +121,11 @@ elif st.session_state.seccion == 'subida':
             
             st.markdown(f"""
                 <div class="card-anio">
-                    <div class="grid-datos">
-                        <div class="col-dato"><p class="label-dato">Precio Hora {anio}</p><span class="val-new">{p_acum:.2f} €</span></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #475569; padding-bottom: 5px;">
+                        <span style="color:white; font-size:18px; font-weight:800;">AÑO {anio}</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="col-dato"><p class="label-dato">Precio Hora</p><span class="val-new">{p_acum:.2f} €</span></div>
                         <div class="col-dato"><p class="label-dato">Mensual Bruto</p><span class="val-new">{m_new:,.2f} €</span></div>
                     </div>
                     {f'<div class="pago-mano">💰 PAGO MANO ALZADA: {p_u:,.2f} € bruto</div>' if p_u > 0 else ""}
@@ -150,7 +150,3 @@ elif st.session_state.seccion == 'atrasos':
         p_n = motor_2026(p_ant_atr, h_sem_atr, cat_atr)
         total = (p_n - p_ant_atr) * h_mens * (MESES.index(mes_h) + 1)
         st.markdown(f'<div class="card-anio"><span class="val-new">TOTAL ATRASOS: {total:,.2f} € bruto</span></div>', unsafe_allow_html=True)
-
-elif st.session_state.seccion == 'salir':
-    st.markdown('<p class="titulo">SESIÓN FINALIZADA</p>', unsafe_allow_html=True)
-    if st.button("↩️ REINICIAR"): st.session_state.seccion = 'menu'; st.rerun()
