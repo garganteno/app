@@ -10,10 +10,7 @@ st.markdown("""
     .stApp { background: #0a0f1e; }
     .titulo { text-align: center; color: #ffffff; font-size: 26px; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; }
     label { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; }
-    .card-anio {
-        background: #1e293b; border: 1px solid #475569; border-radius: 14px;
-        padding: 18px; margin-bottom: 20px;
-    }
+    .card-anio { background: #1e293b; border: 1px solid #475569; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
     .header-anio { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #475569; padding-bottom: 10px; }
     .badge-inc { background: #10b981; color: white; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; }
     .grid-datos { display: flex; flex-direction: column; gap: 12px; }
@@ -125,7 +122,14 @@ elif st.session_state.seccion == 'subida':
                     {f'<div class="pago-mano">💰 PAGO A MANO ALZADA ({int(mano_pct*1000)/10}%): {p_u:,.2f} €</div>' if p_u > 0 else ""}
                 </div>
             """, unsafe_allow_html=True)
-            informe_txt += f"AÑO {anio}: {p_acum:.2f}€/h | Mensual: {m_new:,.2f}€ bruto | Mano Alzada: {p_u:,.2f}€ bruto\n"
+            
+            # Aquí es donde forzamos la palabra "bruto" en cada línea del archivo grabado
+            informe_txt += f"AÑO {anio}:\n"
+            informe_txt += f"- Precio Hora: {p_acum:.2f} €\n"
+            informe_txt += f"- Mensual Bruto: {m_new:,.2f} €\n"
+            if p_u > 0:
+                informe_txt += f"- Pago Mano Alzada: {p_u:,.2f} € bruto\n"
+            informe_txt += "-"*20 + "\n"
 
         if vista == "COMPLETO":
             dif_total = total_conv - total_sin
@@ -137,12 +141,13 @@ elif st.session_state.seccion == 'subida':
                     <p style="color:#10b981; font-size:16px; font-weight:bold;">MEJORA: +{dif_total:,.2f}€ bruto</p>
                 </div>
             """, unsafe_allow_html=True)
-            informe_txt += f"\nTOTAL CONVENIO: {total_conv:,.2f}€ bruto\nMEJORA NETA: {dif_total:,.2f}€ bruto\n"
+            informe_txt += f"\nTOTAL CONVENIO ACUMULADO: {total_conv:,.2f} € bruto\nMEJORA NETA: {dif_total:,.2f} € bruto\n"
 
         st.download_button("💾 GRABAR INFORME (.TXT)", informe_txt, file_name=f"informe_{st.session_state.nombre}.txt")
         if st.button("⬅️ VOLVER AL MENÚ", key="back_sub_bottom"): st.session_state.seccion = 'menu'; st.rerun()
 
 elif st.session_state.seccion == 'atrasos':
+    # (Lógica de atrasos igual que antes...)
     st.markdown(f'<p class="titulo">💸 ATRASOS: {st.session_state.nombre}</p>', unsafe_allow_html=True)
     if st.button("⬅️ VOLVER AL MENÚ", key="back_atr_top"): st.session_state.seccion = 'menu'; st.rerun()
     with st.expander("⚙️ DATOS DE ATRASOS", expanded=True):
@@ -173,7 +178,7 @@ elif st.session_state.seccion == 'atrasos':
                 a2 = (p_n2 - p_ant_atr) * h_mens * m2
             total = a1 + a2
         st.markdown(f'<div class="card-anio" style="border-left:8px solid #f59e0b;"><p class="label-dato">TOTAL ATRASOS BRUTOS</p><span class="val-new">{total:,.2f} €</span></div>', unsafe_allow_html=True)
-        st.download_button("💾 GRABAR ATRASOS (.TXT)", f"Atrasos de {st.session_state.nombre}\nTotal: {total:,.2f}€ bruto", file_name=f"atrasos_{st.session_state.nombre}.txt")
+        st.download_button("💾 GRABAR ATRASOS (.TXT)", f"Atrasos de {st.session_state.nombre}\nTotal: {total:,.2f} € bruto", file_name=f"atrasos_{st.session_state.nombre}.txt")
         if st.button("⬅️ VOLVER AL MENÚ", key="back_atr_bottom"): st.session_state.seccion = 'menu'; st.rerun()
 
 elif st.session_state.seccion == 'salir':
