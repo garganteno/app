@@ -3,22 +3,30 @@ import streamlit as st
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29", layout="centered")
 
-# Estilo de Alto Contraste (Blanco sobre Negro/Azul)
+# Estilo de Alto Contraste Mejorado
 st.markdown("""
     <style>
     .stApp { background: #0a0f1e; }
     .titulo { text-align: center; color: #ffffff; font-size: 26px; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; }
-    label { color: #ffffff !important; font-weight: 800 !important; font-size: 14px !important; }
+    
+    /* Etiquetas y textos de selección en BLANCO PURO */
+    label, .stMarkdown, p, [data-testid="stWidgetLabel"] { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; }
+    
+    /* Arreglo específico para los botones de Radio (Si/No) */
+    div[data-testid="stMarkdownContainer"] p { color: #ffffff !important; }
+    div[class*="st-"] label p { color: #ffffff !important; }
+
     .card-anio { background: #1e293b; border: 1px solid #475569; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
     .header-anio { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #475569; padding-bottom: 10px; }
     .badge-inc { background: #10b981; color: white; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; }
-    .grid-datos { display: flex; flex-direction: column; gap: 10px; }
-    @media (min-width: 600px) { .grid-datos { flex-direction: row; justify-content: space-between; } .col-dato { flex: 1; } }
-    .col-dato { background: #0f172a; padding: 10px; border-radius: 8px; border-left: 4px solid #3b82f6; }
-    .label-dato { color: #94a3b8; font-size: 10px; text-transform: uppercase; font-weight: 700; }
+    .col-dato { background: #0f172a; padding: 10px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px; }
+    .label-dato { color: #94a3b8 !important; font-size: 10px !important; text-transform: uppercase; font-weight: 700; }
     .val-old { color: #cbd5e1; font-size: 13px; display: block; }
     .val-new { color: #ffffff; font-size: 19px; font-weight: 800; display: block; }
     .pago-mano { background: rgba(245, 158, 11, 0.2); border: 2px dashed #f59e0b; color: #fbbf24; padding: 12px; border-radius: 10px; margin-top: 15px; text-align: center; font-weight: 800; }
+    
+    /* Botones principales */
+    .stButton>button { width: 100%; background-color: #2563eb !important; color: white !important; font-weight: bold !important; border-radius: 10px; height: 50px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -34,7 +42,7 @@ MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Oc
 if 'seccion' not in st.session_state:
     st.session_state.seccion = 'menu'
 
-# --- FUNCIÓN MOTOR DE CÁLCULO 2026 ---
+# --- MOTOR DE CÁLCULO ---
 def motor_2026(p_ant, h_sem, cat):
     h_an = h_sem * 44.2
     f_j = h_sem / 40
@@ -59,7 +67,6 @@ elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">SESIÓN FINALIZADA</p>', unsafe_allow_html=True)
     if st.button("↩️ REINICIAR"): st.session_state.seccion = 'menu'; st.rerun()
 
-# --- VISTA: ATRASOS ---
 elif st.session_state.seccion == 'atrasos':
     st.markdown('<p class="titulo">💸 ATRASOS 2026</p>', unsafe_allow_html=True)
     if st.button("⬅️ VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
@@ -68,15 +75,19 @@ elif st.session_state.seccion == 'atrasos':
         p_ant_atr = st.number_input("Precio Hora ANTIGUO (€)", value=10.00, format="%.2f")
         h_sem_atr = st.number_input("Horas Semanales", value=40.0)
         cat_atr = st.selectbox("Categoría Original", list(TRAMOS_BASE.keys()))
+        
+        # Selección Si/No con colores corregidos por CSS
         cambio = st.radio("¿Hubo cambio de categoría?", ["No", "Si"], horizontal=True)
+        
         if cambio == "Si":
             mes_c = st.selectbox("Mes del cambio:", MESES)
             cat_n = st.selectbox("Nueva Categoría:", list(TRAMOS_BASE.keys()))
         mes_h = st.selectbox("Calcular hasta el mes de:", MESES)
 
-    if st.button("🚀 CALCULAR"):
+    if st.button("🚀 CALCULAR ATRASOS"):
         h_mens = (h_sem_atr * 44.2) / 12
         idx_hasta = MESES.index(mes_h) + 1
+        
         if cambio == "No":
             p_n = motor_2026(p_ant_atr, h_sem_atr, cat_atr)
             total = (p_n - p_ant_atr) * h_mens * idx_hasta
@@ -91,18 +102,18 @@ elif st.session_state.seccion == 'atrasos':
                 m2 = idx_hasta - idx_c
                 a2 = (p_n2 - p_ant_atr) * h_mens * m2
             total = a1 + a2
+            
         st.markdown(f'<div class="card-anio" style="border-left:8px solid #f59e0b;"><p class="label-dato">TOTAL ATRASOS BRUTOS</p><span class="val-new">{total:,.2f} €</span></div>', unsafe_allow_html=True)
 
-# --- VISTA: SUBIDA SALARIAL ---
 elif st.session_state.seccion == 'subida':
     st.markdown('<p class="titulo">📈 PROYECCIÓN 26-29</p>', unsafe_allow_html=True)
     if st.button("⬅️ VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
     
     with st.expander("⚙️ CONFIGURACIÓN", expanded=True):
         p_act = st.number_input("Precio Hora Actual (€)", value=10.00, format="%.2f")
-        h_ant = st.number_input("Horas Semanales Actuales", value=40.0)
+        h_ant = st.number_input("Horas Actuales", value=40.0)
         h_new = st.number_input("Horas Nuevo Convenio", value=40.0)
-        pagas = st.selectbox("Número de Pagas", [12, 14])
+        pagas = st.selectbox("Pagas", [12, 14, 15, 16])
         cat = st.selectbox("Categoría Profesional", list(TRAMOS_BASE.keys()))
         vista = st.selectbox("Proyectar hasta:", ["2026", "2027", "2028", "2029", "COMPLETO"])
 
@@ -115,7 +126,8 @@ elif st.session_state.seccion == 'subida':
         for anio in range(2026, limite + 1):
             h_ref = h_an_ant if anio == 2026 else h_an_new
             p_prev = p_acum
-            a_prev, m_prev = p_prev * h_ref, (p_prev * h_ref) / pagas
+            a_prev = p_prev * h_ref
+            m_prev = a_prev / pagas
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
             
             tramos_anio = TRAMOS_BASE[cat].copy()
