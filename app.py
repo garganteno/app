@@ -4,18 +4,26 @@ from datetime import datetime
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29 Pro", layout="centered")
 
-# Estilo de Alto Impacto y Ocultación TOTAL de Iconos de Sistema
+# BLOQUEO TOTAL DE ICONOS Y MENÚS (Reforzado)
 st.markdown("""
     <style>
-    /* OCULTAR ELEMENTOS DE SISTEMA (ARRIBA Y ABAJO) */
-    header {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
-    #MainMenu {visibility: hidden !important;}
+    /* Ocultar barra superior completa */
+    header {visibility: hidden !important; display: none !important;}
+    
+    /* Ocultar menú principal (hamburguesa) */
+    #MainMenu {visibility: hidden !important; display: none !important;}
+    
+    /* Ocultar iconos de estado y botones de deploy */
     .stDeployButton {display:none !important;}
+    footer {visibility: hidden !important;}
+    
+    /* Ocultar botones de usuario y herramientas de desarrollador abajo a la derecha */
+    [data-testid="stStatusWidget"] {display: none !important;}
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
-    [data-testid="stStatusWidget"] {display: none !important;}
     #viewerBadge {display: none !important;}
+    button[title="View source"] {display: none !important;}
+    .viewerBadge_container__1QSob {display: none !important;}
     
     /* ESTILO DE LA APLICACIÓN */
     .stApp { background: #0a0f1e; }
@@ -23,7 +31,7 @@ st.markdown("""
     label { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; }
     .card-anio { background: #1e293b; border: 1px solid #475569; border-radius: 14px; padding: 18px; margin-bottom: 20px; }
     .header-anio { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #475569; padding-bottom: 10px; }
-    .badge-inc { background: #10b981; color: white; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+    .badge-inc { background: #10b981; color: white; padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; }
     .grid-datos { display: flex; flex-direction: column; gap: 12px; }
     @media (min-width: 600px) { .grid-datos { flex-direction: row; justify-content: space-between; } .col-dato { flex: 1; } }
     .col-dato { background: #0f172a; padding: 12px; border-radius: 10px; border-left: 4px solid #3b82f6; }
@@ -49,7 +57,7 @@ MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Oc
 if 'seccion' not in st.session_state: st.session_state.seccion = 'menu'
 if 'nombre' not in st.session_state: st.session_state.nombre = ""
 
-# --- MOTOR DE CÁLCULO 2026 ---
+# --- MOTOR DE CÁLCULO ---
 def motor_2026(p_ant, h_sem, cat):
     h_an = h_sem * 44.2
     f_j = h_sem / 40
@@ -135,6 +143,18 @@ elif st.session_state.seccion == 'subida':
             """, unsafe_allow_html=True)
             
             informe_txt += f"AÑO {anio}:\n- Mensual Bruto: {m_new:,.2f} € bruto\n- Mano Alzada: {p_u:,.2f} € bruto\n{'-'*20}\n"
+
+        if vista == "COMPLETO":
+            dif_total = total_conv - total_sin
+            st.markdown(f"""
+                <div class="card-balance">
+                    <p style="color:#10b981; font-size:16px; font-weight:bold;">⚖️ BALANCE TOTAL VIGENCIA</p>
+                    <p style="color:#cbd5e1; font-size:14px;">Sin subida ganarías: {total_sin:,.2f}€</p>
+                    <p style="color:#ffffff; font-size:24px; font-weight:900;">Con Convenio: {total_conv:,.2f}€</p>
+                    <p style="color:#10b981; font-size:16px; font-weight:bold;">MEJORA: +{dif_total:,.2f}€ bruto</p>
+                </div>
+            """, unsafe_allow_html=True)
+            informe_txt += f"\nTOTAL CONVENIO: {total_conv:,.2f} € bruto\nMEJORA NETA: {dif_total:,.2f} € bruto\n"
 
         st.download_button("💾 GRABAR INFORME (.TXT)", informe_txt, file_name=f"informe_{st.session_state.nombre}.txt")
         if st.button("⬅️ VOLVER AL MENÚ", key="back_sub_bottom"): st.session_state.seccion = 'menu'; st.rerun()
