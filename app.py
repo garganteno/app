@@ -4,9 +4,20 @@ from datetime import datetime
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29 Pro", layout="centered")
 
-# Estilo de Alto Impacto
+# Estilo de Alto Impacto y Ocultación TOTAL de Iconos de Sistema
 st.markdown("""
     <style>
+    /* OCULTAR ELEMENTOS DE SISTEMA (ARRIBA Y ABAJO) */
+    header {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
+    #MainMenu {visibility: hidden !important;}
+    .stDeployButton {display:none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    [data-testid="stStatusWidget"] {display: none !important;}
+    #viewerBadge {display: none !important;}
+    
+    /* ESTILO DE LA APLICACIÓN */
     .stApp { background: #0a0f1e; }
     .titulo { text-align: center; color: #ffffff; font-size: 26px; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; }
     label { color: #ffffff !important; font-weight: 800 !important; font-size: 15px !important; }
@@ -123,31 +134,12 @@ elif st.session_state.seccion == 'subida':
                 </div>
             """, unsafe_allow_html=True)
             
-            # Aquí es donde forzamos la palabra "bruto" en cada línea del archivo grabado
-            informe_txt += f"AÑO {anio}:\n"
-            informe_txt += f"- Precio Hora: {p_acum:.2f} €\n"
-            informe_txt += f"- Mensual Bruto: {m_new:,.2f} €\n"
-            if p_u > 0:
-                informe_txt += f"- Pago Mano Alzada: {p_u:,.2f} € bruto\n"
-            informe_txt += "-"*20 + "\n"
-
-        if vista == "COMPLETO":
-            dif_total = total_conv - total_sin
-            st.markdown(f"""
-                <div class="card-balance">
-                    <p style="color:#10b981; font-size:16px; font-weight:bold;">⚖️ BALANCE TOTAL VIGENCIA</p>
-                    <p style="color:#cbd5e1; font-size:14px;">Sin subida ganarías: {total_sin:,.2f}€</p>
-                    <p style="color:#ffffff; font-size:24px; font-weight:900;">Con Convenio: {total_conv:,.2f}€</p>
-                    <p style="color:#10b981; font-size:16px; font-weight:bold;">MEJORA: +{dif_total:,.2f}€ bruto</p>
-                </div>
-            """, unsafe_allow_html=True)
-            informe_txt += f"\nTOTAL CONVENIO ACUMULADO: {total_conv:,.2f} € bruto\nMEJORA NETA: {dif_total:,.2f} € bruto\n"
+            informe_txt += f"AÑO {anio}:\n- Mensual Bruto: {m_new:,.2f} € bruto\n- Mano Alzada: {p_u:,.2f} € bruto\n{'-'*20}\n"
 
         st.download_button("💾 GRABAR INFORME (.TXT)", informe_txt, file_name=f"informe_{st.session_state.nombre}.txt")
         if st.button("⬅️ VOLVER AL MENÚ", key="back_sub_bottom"): st.session_state.seccion = 'menu'; st.rerun()
 
 elif st.session_state.seccion == 'atrasos':
-    # (Lógica de atrasos igual que antes...)
     st.markdown(f'<p class="titulo">💸 ATRASOS: {st.session_state.nombre}</p>', unsafe_allow_html=True)
     if st.button("⬅️ VOLVER AL MENÚ", key="back_atr_top"): st.session_state.seccion = 'menu'; st.rerun()
     with st.expander("⚙️ DATOS DE ATRASOS", expanded=True):
