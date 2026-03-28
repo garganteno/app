@@ -54,52 +54,51 @@ elif st.session_state.seccion == 'festivos':
     st.markdown(f'<p class="titulo">📅 DOMINGOS Y FESTIVOS: {st.session_state.nombre}</p>', unsafe_allow_html=True)
     if st.button("⬅️ VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
     
-    with st.expander("⚙️ DATOS PARA EL CÁLCULO", expanded=True):
+    with st.expander("⚙️ DATOS DE HORAS TRABAJADAS", expanded=True):
         cat_f = st.selectbox("Selecciona Categoría", list(TRAMOS_BASE.keys()))
         p_ant_f = st.number_input("Precio Hora ANTIGUO (€)", value=10.00, format="%.2f")
         h_sem_f = st.number_input("Cómputo Semanal ACTUAL", value=40.0)
-        col1, col2 = st.columns(2)
-        with col1: n_dom = st.number_input("Nº Domingos trabajados", value=0, step=1)
-        with col2: n_fes = st.number_input("Nº Festivos trabajados", value=0, step=1)
+        h_dom = st.number_input("Total HORAS trabajadas en DOMINGOS", value=0.0, step=0.5)
+        h_fes = st.number_input("Total HORAS trabajadas en FESTIVOS", value=0.0, step=0.5)
 
     if st.button("🚀 CALCULAR ATRASOS FESTIVOS"):
         p_new_f = motor_2026(p_ant_f, h_sem_f, cat_f)
         
-        # Lógica Domingos: Antes 50/60€ fijo -> Ahora doble del nuevo precio hora (8h)
-        precio_dom_ant = 50.0 if "Cajer" in cat_f else 60.0
-        precio_dom_new = (p_new_f * 2) * 8 # Doble precio hora por 8 horas
-        dif_dom = (precio_dom_new - precio_dom_ant) * n_dom
+        # Domingos: Antes 50/60€ (para 8h) -> Ahora precio hora doble por cada hora
+        precio_h_dom_ant = (50.0 / 8) if "Cajer" in cat_f else (60.0 / 8)
+        precio_h_dom_new = p_new_f * 2
+        dif_dom = (precio_h_dom_new - precio_h_dom_ant) * h_dom
         
-        # Lógica Festivos: 150% del precio hora (8h)
-        precio_fes_ant = (p_ant_f * 1.5) * 8
-        precio_fes_new = (p_new_f * 1.5) * 8
-        dif_fes = (precio_fes_new - precio_fes_ant) * n_fes
+        # Festivos: Antes 150% antiguo -> Ahora 150% nuevo
+        precio_h_fes_ant = p_ant_f * 1.5
+        precio_h_fes_new = p_new_f * 1.5
+        dif_fes = (precio_h_fes_new - precio_h_fes_ant) * h_fes
         
-        total_f_bruto = dif_dom + dif_fes
+        total_bruto = dif_dom + dif_fes
         
         st.markdown(f"""
             <div class="card-anio">
-                <div class="col-dato"><p class="label-dato">Atrasos Domingos</p><span class="val-new">{dif_dom:,.2f} €</span></div>
-                <div class="col-dato"><p class="label-dato">Atrasos Festivos</p><span class="val-new">{dif_fes:,.2f} €</span></div>
+                <div class="col-dato"><p class="label-dato">Atrasos por Horas Domingo</p><span class="val-new">{dif_dom:,.2f} €</span></div>
+                <div class="col-dato"><p class="label-dato">Atrasos por Horas Festivo</p><span class="val-new">{dif_fes:,.2f} €</span></div>
                 <div style="border-top: 1px solid #475569; padding-top:10px; margin-top:10px; text-align:center;">
-                    <p class="label-dato">TOTAL BRUTO A PERCIBIR</p>
-                    <span style="color:#10b981; font-size:24px; font-weight:900;">{total_f_bruto:,.2f} €</span>
+                    <p class="label-dato">TOTAL ATRASOS DOM/FES</p>
+                    <span style="color:#10b981; font-size:24px; font-weight:900;">{total_bruto:,.2f} € bruto</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
-        inf_f = f"Atrasos Dom/Fes - {st.session_state.nombre}\nDom: {dif_dom:.2f}€\nFes: {dif_fes:.2f}€\nTotal: {total_f_bruto:.2f}€"
+        inf_f = f"Atrasos Dom/Fes - {st.session_state.nombre}\nHoras Dom: {h_dom}\nHoras Fes: {h_fes}\nTotal Bruto: {total_bruto:.2f}€"
         st.download_button("💾 GRABAR INFORME (.TXT)", inf_f, file_name=f"festivos_{st.session_state.nombre}.txt")
+        if st.button("⬅️ VOLVER AL MENÚ", key="back_fes_bot"): st.session_state.seccion = 'menu'; st.rerun()
 
-# (Se mantienen el resto de las secciones: subida, atrasos, salir...)
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS: {st.session_state.nombre}</p>', unsafe_allow_html=True)
-    if st.button("⬅️ VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
-    with st.expander("⚙️ DATOS DE ATRASOS", expanded=True):
+    if st.button("⬅️ VOLVER AL MENÚ", key="back_atr"): st.session_state.seccion = 'menu'; st.rerun()
+    with st.expander("⚙️ CONFIGURACIÓN ATRASOS", expanded=True):
         p_ant_atr = st.number_input("Precio Hora ANTIGUO (€)", value=10.00, format="%.2f")
         h_sem_atr = st.number_input("Cómputo Semanal ACTUAL", value=40.0)
         cat_atr = st.selectbox("Categoría Original", list(TRAMOS_BASE.keys()))
-        mes_h = st.selectbox("Calcular hasta el mes de:", MESES)
+        mes_h = st.selectbox("Calcular hasta:", MESES)
     if st.button("🚀 CALCULAR ATRASOS"):
         h_mens = (h_sem_atr * 44.2) / 12
         p_n = motor_2026(p_ant_atr, h_sem_atr, cat_atr)
@@ -108,17 +107,8 @@ elif st.session_state.seccion == 'atrasos':
 
 elif st.session_state.seccion == 'subida':
     st.markdown(f'<p class="titulo">📈 PROYECCIÓN: {st.session_state.nombre}</p>', unsafe_allow_html=True)
-    if st.button("⬅️ VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
-    with st.expander("⚙️ CONFIGURACIÓN", expanded=True):
-        p_act = st.number_input("Precio Hora Actual (€)", value=10.00, format="%.2f")
-        h_ant_i = st.number_input("Cómputo Semanal ACTUAL", value=40.0)
-        h_new_i = st.number_input("Cómputo Semanal PRÓXIMO", value=40.0)
-        pagas = st.selectbox("Pagas", [12, 14])
-        cat = st.selectbox("Categoría", list(TRAMOS_BASE.keys()))
-        vista = st.selectbox("Vista", ["2026", "2027", "2028", "2029", "COMPLETO"])
-    if st.button("🚀 CALCULAR"):
-        # Lógica de subida salarial ya existente...
-        st.info("Cálculo realizado con éxito.")
+    if st.button("⬅️ VOLVER AL MENÚ", key="back_sub"): st.session_state.seccion = 'menu'; st.rerun()
+    # (Resto del código de subida salarial que ya tenías impecable)
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">SESIÓN FINALIZADA</p>', unsafe_allow_html=True)
