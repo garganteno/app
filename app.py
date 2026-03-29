@@ -144,23 +144,26 @@ elif st.session_state.seccion == 'subida':
                     {f'<div class="pago-mano">💰 PAGO MANO ALZADA: {p_u:,.2f} €</div>' if p_u > 0 else ""}
                 </div>
             """, unsafe_allow_html=True)
-            
+
+        # --- BOTONES FINALES DE ACCIÓN ---
         st.markdown(f"""
             <div class="card-anio" style="border: 2px solid #3b82f6; background: #0f172a;">
-                <p class="titulo" style="font-size:18px; margin-bottom:10px;">📊 RESUMEN TOTAL ACUMULADO</p>
+                <p class="titulo" style="font-size:18px; margin-bottom:10px;">📊 RESUMEN FINAL</p>
                 <div class="col-dato">
-                    <p class="label-dato">Total con subidas + mano alzada</p>
+                    <p class="label-dato">Total acumulado con subidas</p>
                     <span class="val-new" style="color:#10b981;">{total_con_subida:,.2f} €</span>
-                </div>
-                <div class="col-dato">
-                    <p class="label-dato">Total manteniendo salario actual</p>
-                    <span class="val-new" style="color:#94a3b8;">{total_sin_subida:,.2f} €</span>
-                </div>
-                <div class="pago-mano" style="background:rgba(59, 130, 246, 0.2); border-color:#3b82f6; color:#ffffff; font-size:18px;">
-                    DIFERENCIA A TU FAVOR: {(total_con_subida - total_sin_subida):,.2f} €
                 </div>
             </div>
         """, unsafe_allow_html=True)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🏠 VOLVER AL MENÚ", key="final_home"):
+                st.session_state.seccion = 'menu'
+                st.rerun()
+        with col2:
+            csv = f"Nombre;{st.session_state.nombre}\nTotal;{total_con_subida:.2f}"
+            st.download_button("💾 GRABAR DATOS (CSV)", data=csv, file_name=f"resumen_{st.session_state.nombre}.csv", mime="text/csv")
 
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
