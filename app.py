@@ -68,12 +68,10 @@ elif st.session_state.seccion == 'festivos':
 
     if st.button("🚀 CALCULAR DESGLOSE"):
         p_new_f = motor_2026(p_ant_f, 40.0, cat_f)
-        # Lógica Domingos: Base + Plus (50 o 60) por cada 8h
         plus_8h = 50.0 if "Cajer" in cat_f else 60.0
         p_h_dom_ant = p_ant_f + (plus_8h / 8)
         p_h_dom_new = p_new_f * 2
         dif_dom = (p_h_dom_new - p_h_dom_ant) * h_dom
-        # Festivos: 1.5 sobre base
         p_h_fes_ant = p_ant_f * 1.5
         p_h_fes_new = p_new_f * 1.5
         dif_fes = (p_h_fes_new - p_h_fes_ant) * h_fes
@@ -100,7 +98,12 @@ elif st.session_state.seccion == 'festivos':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_fes"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            txt_fes = f"INFORME FESTIVOS - {st.session_state.nombre}\n\nAtraso Domingos: {dif_dom:.2f} EUR\nAtraso Festivos: {dif_fes:.2f} EUR\nTOTAL: {(dif_dom+dif_fes):.2f} EUR"
+            txt_fes = (f"INFORME FESTIVOS - {st.session_state.nombre}\n"
+                       f"Horas Domingos: {h_dom}\n"
+                       f"Atraso Domingos: {dif_dom:.2f} EUR\n"
+                       f"Horas Festivos: {h_fes}\n"
+                       f"Atraso Festivos: {dif_fes:.2f} EUR\n"
+                       f"TOTAL: {(dif_dom+dif_fes):.2f} EUR")
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_fes, file_name="festivos.txt")
 
 elif st.session_state.seccion == 'subida':
@@ -119,7 +122,7 @@ elif st.session_state.seccion == 'subida':
         f_j, p_acum = h_new_i / 40, p_act
         limite = 2029 if vista == "COMPLETO" else int(vista)
         total_con_subida, total_sin_subida = 0, 0
-        txt_informe = f"INFORME DE PROYECCIÓN SALARIAL - {st.session_state.nombre}\n" + "="*40 + "\n"
+        txt_informe = f"INFORME PROYECCIÓN - {st.session_state.nombre}\n"
         
         for anio in range(2026, limite + 1):
             h_ref = h_an_ant if anio == 2026 else h_an_new
@@ -143,9 +146,7 @@ elif st.session_state.seccion == 'subida':
             total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
             
-            txt_informe += f"\nAÑO {anio}:\n- Precio Hora: {p_acum:.2f} €\n- Salario Mensual: {m_new:,.2f} €\n- Incremento: {inc:.2f}%"
-            if p_u > 0: txt_informe += f"\n- Pago Mano Alzada: {p_u:,.2f} €"
-            txt_informe += "\n" + "-"*20
+            txt_informe += f"\nAÑO {anio}: {p_acum:.2f}€/h | Mensual: {m_new:.2f}€"
 
             st.markdown(f"""
                 <div class="card-anio">
@@ -164,14 +165,8 @@ elif st.session_state.seccion == 'subida':
         st.markdown(f"""
             <div class="card-anio" style="border: 2px solid #3b82f6; background: #0f172a;">
                 <p class="titulo" style="font-size:18px; margin-bottom:10px;">📊 RESUMEN FINAL</p>
-                <div class="col-dato">
-                    <p class="label-dato">Total acumulado CON subidas</p>
-                    <span class="val-new" style="color:#10b981;">{total_con_subida:,.2f} €</span>
-                </div>
-                <div class="col-dato">
-                    <p class="label-dato">Total acumulado SIN subidas</p>
-                    <span class="val-new" style="color:#94a3b8;">{total_sin_subida:,.2f} €</span>
-                </div>
+                <div class="col-dato"><p class="label-dato">Total CON subidas</p><span class="val-new" style="color:#10b981;">{total_con_subida:,.2f} €</span></div>
+                <div class="col-dato"><p class="label-dato">Total SIN subidas</p><span class="val-new" style="color:#94a3b8;">{total_sin_subida:,.2f} €</span></div>
             </div>
         """, unsafe_allow_html=True)
         
@@ -179,8 +174,8 @@ elif st.session_state.seccion == 'subida':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_sub"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            txt_informe += f"\n\nRESUMEN FINAL:\nTOTAL CON SUBIDAS: {total_con_subida:,.2f} €\nTOTAL SIN SUBIDAS: {total_sin_subida:,.2f} €"
-            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name="subida_salarial.txt")
+            txt_informe += f"\n\nRESUMEN FINAL:\nTotal con Subida: {total_con_subida:.2f}€\nTotal sin Subida: {total_sin_subida:.2f}€"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name="subida.txt")
 
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -213,7 +208,7 @@ elif st.session_state.seccion == 'atrasos':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_atr"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            st.download_button("💾 IMPRIMIR (.TXT)", f"INFORME ATRASOS - {st.session_state.nombre}\n\nMes hasta: {mes_hasta}\nTotal Atrasos: {total_atrasos:.2f} €", "atrasos.txt")
+            st.download_button("💾 IMPRIMIR (.TXT)", f"INFORME ATRASOS - {st.session_state.nombre}\nTotal Atrasos: {total_atrasos:.2f} EUR", "atrasos.txt")
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
