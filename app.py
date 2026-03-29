@@ -24,12 +24,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- DATOS MAESTROS ---
-TRAMOS_BASE = {
-    "Cajer@/Reponedor": [18800, 19800, 21000], 
-    "Asistent@ / Oficial": [21000, 22000, 23000], 
-    "Adjunt@": [25000, 27000, 29000], 
-    "Gt": [29500, 31000, 33600, 35000, 38200]
-}
+TRAMOS_BASE = {"Cajer@/Reponedor": [18800, 19800, 21000], "Asistent@ / Oficial": [21000, 22000, 23000], "Adjunt@": [25000, 27000, 29000], "Gt": [29500, 31000, 33600, 35000, 38200]}
 MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
 if 'seccion' not in st.session_state: st.session_state.seccion = 'menu'
@@ -128,34 +123,26 @@ elif st.session_state.seccion == 'subida':
             h_ref = h_an_ant if anio == 2026 else h_an_new
             p_prev = p_acum
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
-            
-            # --- LÓGICA DE TRAMOS MODIFICADA ---
             tramos_actuales = TRAMOS_BASE[cat].copy()
-            # El último tramo sube un 3% anual solo a partir de 2027
             if anio >= 2027:
                 factor_ultimo_tramo = (1.03 ** (anio - 2026))
-                tramos_actuales[-1] = tramos_actuales[-1] * factor_ultimo_tramo
+                tramos_actuales[-1] *= factor_ultimo_tramo
             
             ult_tramo_aj = tramos_actuales[-1] * f_j
             sal_fijo = (p_prev * h_an_new) * fijo
             n_anual, p_u = 0, 0.0
             
             if sal_fijo >= (ult_tramo_aj - 0.01):
-                n_anual = sal_fijo
-                p_u = (p_prev * h_ref) * mano_pct
+                n_anual, p_u = sal_fijo, (p_prev * h_ref) * mano_pct
             else:
                 n_anual = sal_fijo
                 for t in tramos_actuales:
                     t_val = t * f_j
-                    if sal_fijo < t_val: 
-                        n_anual = t_val
-                        break
+                    if sal_fijo < t_val: n_anual = t_val; break
             
             p_acum = n_anual / h_an_new
-            m_ant = (p_prev * h_ref / pagas)
-            m_new = (n_anual / pagas)
-            a_ant = (p_prev * h_ref)
-            a_new = n_anual
+            m_ant, m_new = (p_prev * h_ref / pagas), (n_anual / pagas)
+            a_ant, a_new = (p_prev * h_ref), n_anual
             inc = ((p_acum / p_prev) - 1) * 100
             total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
@@ -205,8 +192,10 @@ elif st.session_state.seccion == 'atrasos':
         p_nuevo_atr = motor_2026(p_ant_atr, h_sem_atr, cat_atr)
         dif_hora = p_nuevo_atr - p_ant_atr
         h_mensuales = h_sem_atr * 4.33
-        num_meses = MESES.index(mes_hasta) + 1
-        total_atrasos = dif_hora * h_mensuales * num_meses
+        
+        idx_final = MESES.index(mes_hasta)
+        meses_calculados = MESES[:idx_final+1]
+        total_atrasos = dif_hora * h_mensuales * len(meses_calculados)
         
         st.markdown(f"""
             <div class="card-anio">
@@ -223,7 +212,21 @@ elif st.session_state.seccion == 'atrasos':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_atr"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            st.download_button("💾 IMPRIMIR (.TXT)", f"INFORME ATRASOS - {st.session_state.nombre}\nTotal Atrasos: {total_atrasos:.2f} EUR", "atrasos.txt")
+            # DESGLOSE POR MESES EN EL ARCHIVO TXT
+            txt_atr = f"INFORME DESGLOSADO DE ATRASOS - {st.session_state.nombre}\n"
+            txt_atr += "="*45 + "\n"
+            txt_atr += f"Precio Hora Anterior: {p_ant_atr:.2f} €\n"
+            txt_atr += f"Precio Hora Nuevo:    {p_nuevo_atr:.2f} €\n"
+            txt_atr += f"Diferencia/Hora:      {dif_hora:.4f} €\n"
+            txt_atr += "-"*45 + "\n"
+            
+            for m in meses_calculados:
+                txt_atr += f"- {m}: {(dif_hora * h_mensuales):.2f} €\n"
+            
+            txt_atr += "="*45 + "\n"
+            txt_atr += f"TOTAL ATRASOS: {total_atrasos:.2f} €\n"
+            
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name="atrasos_desglosados.txt")
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
