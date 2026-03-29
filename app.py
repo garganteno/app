@@ -139,11 +139,13 @@ elif st.session_state.seccion == 'subida':
             p_acum = n_anual / h_an_new
             m_ant = (p_prev * h_ref / pagas)
             m_new = (n_anual / pagas)
+            a_ant = (p_prev * h_ref)
+            a_new = n_anual
             inc = ((p_acum / p_prev) - 1) * 100
             total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
             
-            txt_informe += f"\nAÑO {anio}: {p_acum:.2f}€/h | Mensual: {m_new:.2f}€"
+            txt_informe += f"\nAÑO {anio}: {p_acum:.2f}€/h | Anual: {a_new:,.2f}€"
 
             st.markdown(f"""
                 <div class="card-anio">
@@ -152,16 +154,9 @@ elif st.session_state.seccion == 'subida':
                         <span class="badge-inc">+{inc:.2f}%</span>
                     </div>
                     <div class="grid-datos">
-                        <div class="col-dato">
-                            <p class="label-dato">Precio Hora</p>
-                            <span class="val-old">Antes: {p_prev:.2f} €</span>
-                            <span class="val-new">{p_acum:.2f} €</span>
-                        </div>
-                        <div class="col-dato">
-                            <p class="label-dato">Salario Mensual ({pagas} pagas)</p>
-                            <span class="val-old">Antes: {m_ant:,.2f} €</span>
-                            <span class="val-new">{m_new:,.2f} €</span>
-                        </div>
+                        <div class="col-dato"><p class="label-dato">Precio Hora</p><span class="val-old">Antes: {p_prev:.2f} €</span><span class="val-new">{p_acum:.2f} €</span></div>
+                        <div class="col-dato"><p class="label-dato">Mensual ({pagas} pagas)</p><span class="val-old">Antes: {m_ant:,.2f} €</span><span class="val-new">{m_new:,.2f} €</span></div>
+                        <div class="col-dato"><p class="label-dato">Salario Anual</p><span class="val-old">Antes: {a_ant:,.2f} €</span><span class="val-new">{a_new:,.2f} €</span></div>
                     </div>
                     {f'<div class="pago-mano">💰 PAGO MANO ALZADA: {p_u:,.2f} €</div>' if p_u > 0 else ""}
                 </div>
@@ -179,7 +174,7 @@ elif st.session_state.seccion == 'subida':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_sub"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            txt_informe += f"\n\nRESUMEN FINAL:\nTotal con Subida: {total_con_subida:.2f}€\nTotal sin Subida: {total_sin_subida:.2f}€"
+            txt_informe += f"\n\nRESUMEN FINAL:\nTotal con Subida: {total_con_subida:,.2f}€\nTotal sin Subida: {total_sin_subida:,.2f}€"
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name="subida.txt")
 
 elif st.session_state.seccion == 'atrasos':
