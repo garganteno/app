@@ -99,7 +99,8 @@ elif st.session_state.seccion == 'festivos':
                        f"Horas Festivos: {h_fes}\n"
                        f"Atraso Festivos: {dif_fes:.2f} EUR\n"
                        f"TOTAL: {(dif_dom+dif_fes):.2f} EUR")
-            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_fes, file_name="festivos.txt")
+            nom_archivo = f"AtrasosDomingosYFestivos{st.session_state.nombre.title().replace(' ', '')}.txt"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_fes, file_name=nom_archivo)
 
 elif st.session_state.seccion == 'subida':
     st.markdown(f'<p class="titulo">📈 PROYECCIÓN: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -117,14 +118,13 @@ elif st.session_state.seccion == 'subida':
         f_j, p_acum = h_new_i / 40, p_act
         limite = 2029 if vista == "COMPLETO" else int(vista)
         total_con_subida, total_sin_subida = 0, 0
-        txt_informe = f"INFORME PROYECCIÓN - {st.session_state.nombre}\n"
+        txt_informe = f"INFORME PROYECCIÓN - {st.session_state.nombre.title()}\n"
         txt_informe += "="*45 + "\n"
         
         for anio in range(2026, limite + 1):
             h_ref = h_an_ant if anio == 2026 else h_an_new
             p_prev = p_acum
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
-            
             tramos_actuales = TRAMOS_BASE[cat].copy()
             if anio >= 2027:
                 factor_ultimo_tramo = (1.03 ** (anio - 2026))
@@ -133,7 +133,6 @@ elif st.session_state.seccion == 'subida':
             ult_tramo_aj = tramos_actuales[-1] * f_j
             sal_fijo = (p_prev * h_an_new) * fijo
             n_anual, p_u = 0, 0.0
-            
             if sal_fijo >= (ult_tramo_aj - 0.01):
                 n_anual, p_u = sal_fijo, (p_prev * h_ref) * mano_pct
             else:
@@ -149,12 +148,11 @@ elif st.session_state.seccion == 'subida':
             total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
             
-            # MODIFICACIÓN: Incluir precio antiguo en el TXT
             txt_informe += f"\nAÑO {anio}:\n"
-            txt_informe += f"- Precio Hora: {p_acum:.2f} € (Antes: {p_prev:.2f} €)\n"
-            txt_informe += f"- Salario Mensual: {m_new:,.2f} €\n"
-            txt_informe += f"- Salario Anual:   {a_new:,.2f} €\n"
-            if p_u > 0: txt_informe += f"- Mano Alzada:    {p_u:,.2f} €\n"
+            txt_informe += f"- Precio Hora:      {p_acum:.2f} € (Antes: {p_prev:.2f} €)\n"
+            txt_informe += f"- Salario Mensual:  {m_new:,.2f} € (Antes: {m_ant:,.2f} €)\n"
+            txt_informe += f"- Salario Anual:    {a_new:,.2f} € (Antes: {a_ant:,.2f} €)\n"
+            if p_u > 0: txt_informe += f"- Mano Alzada:     {p_u:,.2f} €\n"
             txt_informe += "-"*20
 
             st.markdown(f"""
@@ -184,10 +182,9 @@ elif st.session_state.seccion == 'subida':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_sub"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            txt_informe += f"\n\nRESUMEN FINAL:\n"
-            txt_informe += f"Total con Subida: {total_con_subida:,.2f} €\n"
-            txt_informe += f"Total sin Subida: {total_sin_subida:,.2f} €"
-            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name="subida.txt")
+            txt_informe += f"\n\nRESUMEN FINAL:\nTotal con Subida: {total_con_subida:,.2f} €\nTotal sin Subida: {total_sin_subida:,.2f} €"
+            nom_archivo = f"SubidaSalarial{st.session_state.nombre.title().replace(' ', '')}.txt"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name=nom_archivo)
 
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -221,17 +218,14 @@ elif st.session_state.seccion == 'atrasos':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_atr"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            txt_atr = f"INFORME DESGLOSADO DE ATRASOS - {st.session_state.nombre}\n"
+            txt_atr = f"INFORME ATRASOS - {st.session_state.nombre.title()}\n"
             txt_atr += "="*45 + "\n"
-            txt_atr += f"Precio Hora Anterior: {p_ant_atr:.2f} €\n"
-            txt_atr += f"Precio Hora Nuevo:    {p_nuevo_atr:.2f} €\n"
-            txt_atr += f"Diferencia/Hora:      {dif_hora:.4f} €\n"
-            txt_atr += "-"*45 + "\n"
             for m in meses_calculados:
                 txt_atr += f"- {m}: {(dif_hora * h_mensuales):.2f} €\n"
             txt_atr += "="*45 + "\n"
-            txt_atr += f"TOTAL ATRASOS: {total_atrasos:.2f} €\n"
-            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name="atrasos_desglosados.txt")
+            txt_atr += f"TOTAL: {total_atrasos:.2f} €"
+            nom_archivo = f"CalculoDeAtrasos{st.session_state.nombre.title().replace(' ', '')}.txt"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name=nom_archivo)
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
