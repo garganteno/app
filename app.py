@@ -19,6 +19,7 @@ st.markdown("""
     .pago-mano { background: rgba(245, 158, 11, 0.15); border: 1px dashed #f59e0b; color: #fbbf24; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; font-weight: 700; }
     .stButton>button { width: 100%; background-color: #2563eb !important; color: white !important; font-weight: bold !important; height: 50px; border-radius: 10px; margin-bottom: 10px; }
     div[data-testid="stMarkdownContainer"] p { color: #ffffff !important; }
+    .badge-inc { background: #10b981; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -63,11 +64,9 @@ elif st.session_state.seccion == 'festivos':
 
     if st.button("🚀 CALCULAR DESGLOSE"):
         p_new_f = motor_2026(p_ant_f, h_sem_f, cat_f)
-        # Domingos
         p_h_dom_ant = (50.0 / 8) if "Cajer" in cat_f else (60.0 / 8)
         p_h_dom_new = p_new_f * 2
         dif_dom = (p_h_dom_new - p_h_dom_ant) * h_dom
-        # Festivos
         p_h_fes_ant = p_ant_f * 1.5
         p_h_fes_new = p_new_f * 1.5
         dif_fes = (p_h_fes_new - p_h_fes_ant) * h_fes
@@ -105,26 +104,32 @@ elif st.session_state.seccion == 'subida':
         h_an_ant, h_an_new = h_ant_i * 44.2, h_new_i * 44.2
         f_j, p_acum = h_new_i / 40, p_act
         limite = 2029 if vista == "COMPLETO" else int(vista)
+        total_con_subida, total_sin_subida = 0, 0
         
         for anio in range(2026, limite + 1):
             h_ref = h_an_ant if anio == 2026 else h_an_new
             p_prev = p_acum
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
             tramos_anio = TRAMOS_BASE[cat].copy()
-            tramos_anio[-1] *= (1.03 ** (anio - 2026))
+            factor_tramos = (1.03 ** (anio - 2026))
+            ult_tramo_aj = tramos_anio[-1] * factor_tramos * f_j
+            
             sal_fijo = (p_prev * h_an_new) * fijo
             n_anual, p_u = 0, 0.0
             
-            if sal_fijo >= (tramos_anio[-1] * f_j - 0.01):
+            if sal_fijo >= (ult_tramo_aj - 0.01):
                 n_anual, p_u = sal_fijo, (p_prev * h_ref) * mano_pct
             else:
                 n_anual = sal_fijo
                 for t in tramos_anio:
-                    if sal_fijo < t * f_j: n_anual = t * f_j; break
+                    t_val = t * factor_tramos * f_j
+                    if sal_fijo < t_val: n_anual = t_val; break
             
             p_acum = n_anual / h_an_new
             m_prev, m_new = (p_prev * h_ref / pagas), (n_anual / pagas)
             inc = ((p_acum / p_prev) - 1) * 100
+            total_con_subida += n_anual + p_u
+            total_sin_subida += (p_act * h_an_new)
 
             st.markdown(f"""
                 <div class="card-anio">
@@ -139,12 +144,54 @@ elif st.session_state.seccion == 'subida':
                     {f'<div class="pago-mano">💰 PAGO MANO ALZADA: {p_u:,.2f} €</div>' if p_u > 0 else ""}
                 </div>
             """, unsafe_allow_html=True)
+            
+        st.markdown(f"""
+            <div class="card-anio" style="border: 2px solid #3b82f6; background: #0f172a;">
+                <p class="titulo" style="font-size:18px; margin-bottom:10px;">📊 RESUMEN TOTAL ACUMULADO</p>
+                <div class="col-dato">
+                    <p class="label-dato">Total con subidas + mano alzada</p>
+                    <span class="val-new" style="color:#10b981;">{total_con_subida:,.2f} €</span>
+                </div>
+                <div class="col-dato">
+                    <p class="label-dato">Total manteniendo salario actual</p>
+                    <span class="val-new" style="color:#94a3b8;">{total_sin_subida:,.2f} €</span>
+                </div>
+                <div class="pago-mano" style="background:rgba(59, 130, 246, 0.2); border-color:#3b82f6; color:#ffffff; font-size:18px;">
+                    DIFERENCIA A TU FAVOR: {(total_con_subida - total_sin_subida):,.2f} €
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
 
 elif st.session_state.seccion == 'atrasos':
-    st.markdown(f'<p class="titulo">💸 ATRASOS: {st.session_state.nombre}</p>', unsafe_allow_html=True)
-    if st.button("⬅️ VOLVER"): st.session_state.seccion = 'menu'; st.rerun()
-    # (Lógica de atrasos mensuales igual a la anterior...)
+    st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
+    if st.button("⬅️ VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
+    with st.expander("⚙️ CONFIGURACIÓN", expanded=True):
+        p_ant_atr = st.number_input("Precio Hora 2025 (€)", value=10.00, format="%.2f")
+        h_sem_atr = st.number_input("Horas Semanales", value=40.0)
+        cat_atr = st.selectbox("Categoría para tramos", list(TRAMOS_BASE.keys()))
+        mes_hasta = st.select_slider("Calcular hasta el mes de:", options=MESES, value="Mayo")
+
+    if st.button("🚀 CALCULAR ATRASOS"):
+        p_nuevo_atr = motor_2026(p_ant_atr, h_sem_atr, cat_atr)
+        dif_hora = p_nuevo_atr - p_ant_atr
+        h_mensuales = h_sem_atr * 4.33
+        num_meses = MESES.index(mes_hasta) + 1
+        total_atrasos = dif_hora * h_mensuales * num_meses
+        
+        st.markdown(f"""
+            <div class="card-anio">
+                <p class="label-dato">Resultado del Cálculo</p>
+                <div class="col-dato">
+                    <span class="val-old">Incremento por hora: {dif_hora:.4f} €</span>
+                    <span class="val-new">Mensual estimado: {(dif_hora * h_mensuales):,.2f} €</span>
+                </div>
+                <div class="pago-mano" style="font-size:20px;">
+                    ATRASOS TOTALES ({mes_hasta}):<br>
+                    <span style="font-size:30px;">{total_atrasos:,.2f} €</span>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
 
 elif st.session_state.seccion == 'salir':
-    st.markdown('<p class="titulo">SESIÓN FINALIZADA</p>', unsafe_allow_html=True)
-    if st.button("↩️ REINICIAR"): st.session_state.seccion = 'menu'; st.rerun()
+    st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
+    if st.button("VOLVER A ENTRAR"): st.session_state.seccion = 'menu'; st.rerun()
