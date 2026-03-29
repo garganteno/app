@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit st
 from datetime import datetime
 
 # 1. Configuración de página
@@ -24,12 +24,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- DATOS MAESTROS ---
-TRAMOS_BASE = {
-    "Cajer@/Reponedor": [18800, 19800, 21000], 
-    "Asistent@ / Oficial": [21000, 22000, 23000], 
-    "Adjunt@": [25000, 27000, 29000], 
-    "Gt": [29500, 31000, 33600, 35000, 38200]
-}
+TRAMOS_BASE = {"Cajer@/Reponedor": [18800, 19800, 21000], "Asistent@ / Oficial": [21000, 22000, 23000], "Adjunt@": [25000, 27000, 29000], "Gt": [29500, 31000, 33600, 35000, 38200]}
 MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
 if 'seccion' not in st.session_state: st.session_state.seccion = 'menu'
@@ -140,8 +135,10 @@ elif st.session_state.seccion == 'subida':
                 for t in tramos_anio:
                     t_val = t * factor_tramos * f_j
                     if sal_fijo < t_val: n_anual = t_val; break
+            
             p_acum = n_anual / h_an_new
-            m_new = (n_anual / pagas)
+            m_ant = (p_prev * h_ref / pagas) # Salario mensual antiguo del tramo anterior
+            m_new = (n_anual / pagas)       # Salario mensual nuevo
             inc = ((p_acum / p_prev) - 1) * 100
             total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
@@ -155,8 +152,16 @@ elif st.session_state.seccion == 'subida':
                         <span class="badge-inc">+{inc:.2f}%</span>
                     </div>
                     <div class="grid-datos">
-                        <div class="col-dato"><p class="label-dato">Precio Hora</p><span class="val-old">Antes: {p_prev:.2f} €</span><span class="val-new">{p_acum:.2f} €</span></div>
-                        <div class="col-dato"><p class="label-dato">Mensual ({pagas} pagas)</p><span class="val-new">{m_new:,.2f} €</span></div>
+                        <div class="col-dato">
+                            <p class="label-dato">Precio Hora</p>
+                            <span class="val-old">Antes: {p_prev:.2f} €</span>
+                            <span class="val-new">{p_acum:.2f} €</span>
+                        </div>
+                        <div class="col-dato">
+                            <p class="label-dato">Salario Mensual ({pagas} pagas)</p>
+                            <span class="val-old">Antes: {m_ant:,.2f} €</span>
+                            <span class="val-new">{m_new:,.2f} €</span>
+                        </div>
                     </div>
                     {f'<div class="pago-mano">💰 PAGO MANO ALZADA: {p_u:,.2f} €</div>' if p_u > 0 else ""}
                 </div>
