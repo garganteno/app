@@ -4,7 +4,7 @@ from datetime import datetime
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29 Pro", layout="centered")
 
-# ESTILO DE ALTO IMPACTO
+# ESTILO DE ALTO IMPACTO (RESTAURADO)
 st.markdown("""
     <style>
     [data-testid="stHeader"], [data-testid="stToolbar"], header, footer { display: none !important; visibility: hidden !important; }
@@ -24,12 +24,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- DATOS MAESTROS ---
-TRAMOS_BASE = {
-    "Cajer@/Reponedor": [18800, 19800, 21000], 
-    "Asistent@ / Oficial": [21000, 22000, 23000], 
-    "Adjunt@": [25000, 27000, 29000], 
-    "Gt": [29500, 31000, 33600, 35000, 38200]
-}
+TRAMOS_BASE = {"Cajer@/Reponedor": [18800, 19800, 21000], "Asistent@ / Oficial": [21000, 22000, 23000], "Adjunt@": [25000, 27000, 29000], "Gt": [29500, 31000, 33600, 35000, 38200]}
 MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
 if 'seccion' not in st.session_state: st.session_state.seccion = 'menu'
@@ -76,13 +71,19 @@ elif st.session_state.seccion == 'festivos':
         p_h_fes_new = p_new_f * 1.5
         dif_fes = (p_h_fes_new - p_h_fes_ant) * h_fes
         
-        st.markdown(f"""<div class="card-anio">...</div>""", unsafe_allow_html=True) # Resumen visual omitido por brevedad pero presente en lógica
+        st.markdown(f"""
+            <div class="card-anio">
+                <div class="col-dato"><p class="label-dato">Desglose Domingos</p><span class="val-old">Precio antiguo: {p_h_dom_ant:.2f} €/h</span><span class="val-new">Precio nuevo: {p_h_dom_new:.2f} €/h</span><span style="color:#10b981; font-weight:bold;">Atraso Dom: {dif_dom:,.2f} €</span></div>
+                <div class="col-dato"><p class="label-dato">Desglose Festivos</p><span class="val-old">Precio antiguo: {p_h_fes_ant:.2f} €/h</span><span class="val-new">Precio nuevo: {p_h_fes_new:.2f} €/h</span><span style="color:#10b981; font-weight:bold;">Atraso Fes: {dif_fes:,.2f} €</span></div>
+                <div class="pago-mano" style="font-size:20px;">TOTAL: {(dif_dom + dif_fes):,.2f} € bruto</div>
+            </div>
+        """, unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_fes"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            txt_fes = f"INFORME FESTIVOS - {st.session_state.nombre}\nHoras Dom: {h_dom}\nHoras Fes: {h_fes}\nTotal: {(dif_dom+dif_fes):.2f} EUR"
+            txt_fes = f"INFORME FESTIVOS - {st.session_state.nombre}\nHoras Dom: {h_dom}\nAtraso Dom: {dif_dom:.2f} €\nHoras Fes: {h_fes}\nAtraso Fes: {dif_fes:.2f} €\nTOTAL: {(dif_dom+dif_fes):.2f} EUR"
             nom_arch = f"AtrasosDomingosYFestivos{st.session_state.nombre.title().replace(' ', '')}.txt"
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_fes, file_name=nom_arch)
 
@@ -114,15 +115,13 @@ elif st.session_state.seccion == 'subida':
             sal_fijo = (p_prev * h_an_new) * fijo
             n_anual, p_u = 0, 0.0
             
-            # REGLA: Pago a mano alzada SOLO si rebasas el último tramo
             if sal_fijo >= (ult_tramo_fijo - 0.01):
                 n_anual = sal_fijo
                 p_u = (p_prev * h_ref) * mano_pct
             else:
                 n_anual = sal_fijo
                 for t in tramos:
-                    t_val = t * f_j
-                    if sal_fijo < t_val: n_anual = t_val; break
+                    if sal_fijo < t * f_j: n_anual = t * f_j; break
             
             p_acum = n_anual / h_an_new
             m_ant, m_new = (p_prev * h_ref / pagas), (n_anual / pagas)
@@ -130,11 +129,32 @@ elif st.session_state.seccion == 'subida':
             inc = ((p_acum / p_prev) - 1) * 100
             total_con_subida += (n_anual + p_u); total_sin_subida += (p_act * h_an_new)
 
-            txt_informe += f"\nAÑO {anio}:\n- Hora: {p_acum:.2f}€ (Antes: {p_prev:.2f}€)\n- Mensual: {m_new:,.2f}€ (Antes: {m_ant:,.2f}€)\n- Anual: {a_new:,.2f}€ (Antes: {a_ant:,.2f}€)\n"
+            txt_informe += f"\nAÑO {anio}:\n- Hora: {p_acum:.2f}€ (Ant: {p_prev:.2f}€)\n- Mensual: {m_new:,.2f}€ (Ant: {m_ant:,.2f}€)\n- Anual: {a_new:,.2f}€ (Ant: {a_ant:,.2f}€)\n"
             if p_u > 0: txt_informe += f"- Mano Alzada: {p_u:,.2f}€\n"
 
-            st.markdown(f"""<div class="card-anio">...</div>""", unsafe_allow_html=True) # Tarjetas visuales omitidas por brevedad
-
+            st.markdown(f"""
+                <div class="card-anio">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span style="color:white; font-size:19px; font-weight:800;">AÑO {anio}</span>
+                        <span class="badge-inc">+{inc:.2f}%</span>
+                    </div>
+                    <div class="grid-datos">
+                        <div class="col-dato"><p class="label-dato">Precio Hora</p><span class="val-old">Antes: {p_prev:.2f} €</span><span class="val-new">{p_acum:.2f} €</span></div>
+                        <div class="col-dato"><p class="label-dato">Mensual ({pagas} pagas)</p><span class="val-old">Antes: {m_ant:,.2f} €</span><span class="val-new">{m_new:,.2f} €</span></div>
+                        <div class="col-dato"><p class="label-dato">Anual</p><span class="val-old">Antes: {a_ant:,.2f} €</span><span class="val-new">{a_new:,.2f} €</span></div>
+                    </div>
+                    {f'<div class="pago-mano">💰 PAGO MANO ALZADA: {p_u:,.2f} €</div>' if p_u > 0 else ""}
+                </div>
+            """, unsafe_allow_html=True)
+            
+        st.markdown(f"""
+            <div class="card-anio" style="border: 2px solid #3b82f6; background: #0f172a;">
+                <p class="titulo" style="font-size:18px; margin-bottom:10px;">📊 RESUMEN FINAL</p>
+                <div class="col-dato"><p class="label-dato">Total CON subidas</p><span class="val-new" style="color:#10b981;">{total_con_subida:,.2f} €</span></div>
+                <div class="col-dato"><p class="label-dato">Total SIN subidas</p><span class="val-new" style="color:#94a3b8;">{total_sin_subida:,.2f} €</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+        
         col1, col2 = st.columns(2)
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_sub"): st.session_state.seccion = 'menu'; st.rerun()
@@ -143,8 +163,40 @@ elif st.session_state.seccion == 'subida':
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name=nom_arch)
 
 elif st.session_state.seccion == 'atrasos':
-    # Lógica de atrasos desglosada por meses y botón de volver al menú principal
     st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
     if st.button("⬅️ VOLVER AL MENÚ", key="up_atr"): st.session_state.seccion = 'menu'; st.rerun()
-    # ... Resto de lógica de atrasos desglosados ...
-    # Nombre archivo: nom_arch = f"CalculoDeAtrasos{st.session_state.nombre.title().replace(' ', '')}.txt"
+    with st.expander("⚙️ CONFIGURACIÓN", expanded=True):
+        p_ant_atr = st.number_input("Precio Hora 2025 (€)", value=10.00, format="%.2f")
+        h_sem_atr = st.number_input("Horas Semanales", value=40.0)
+        cat_atr = st.selectbox("Categoría para tramos", list(TRAMOS_BASE.keys()))
+        mes_hasta = st.select_slider("Calcular hasta el mes de:", options=MESES, value="Mayo")
+
+    if st.button("🚀 CALCULAR ATRASOS"):
+        p_nuevo_atr = motor_2026(p_ant_atr, h_sem_atr, cat_atr)
+        dif_hora = p_nuevo_atr - p_ant_atr
+        h_mensuales = h_sem_atr * 4.33
+        idx_final = MESES.index(mes_hasta)
+        meses_calculados = MESES[:idx_final+1]
+        total_atrasos = dif_hora * h_mensuales * len(meses_calculados)
+        
+        st.markdown(f"""
+            <div class="card-anio">
+                <div class="col-dato"><p class="label-dato">Incremento/Hora</p><span class="val-new">{dif_hora:.4f} €</span></div>
+                <div class="col-dato"><p class="label-dato">Atraso Mensual</p><span class="val-new">{(dif_hora * h_mensuales):,.2f} €</span></div>
+                <div class="pago-mano" style="font-size:20px;">TOTAL ATRASOS: {total_atrasos:,.2f} €</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("⬅️ VOLVER AL MENÚ", key="down_atr"): st.session_state.seccion = 'menu'; st.rerun()
+        with col2:
+            txt_atr = f"INFORME ATRASOS - {st.session_state.nombre.title()}\n" + "="*45 + "\n"
+            for m in meses_calculados: txt_atr += f"- {m}: {(dif_hora * h_mensuales):.2f} €\n"
+            txt_atr += "="*45 + f"\nTOTAL: {total_atrasos:.2f} €"
+            nom_arch = f"CalculoDeAtrasos{st.session_state.nombre.title().replace(' ', '')}.txt"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name=nom_arch)
+
+elif st.session_state.seccion == 'salir':
+    st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
+    if st.button("VOLVER A ENTRAR"): st.session_state.seccion = 'menu'; st.rerun()
