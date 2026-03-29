@@ -91,9 +91,10 @@ elif st.session_state.seccion == 'festivos':
         
         c1, c2 = st.columns(2)
         with c1: 
-            if st.button("🏠 VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
+            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="fes_h"): st.session_state.seccion = 'menu'; st.rerun()
         with c2:
-            st.download_button("💾 IMPRIMIR (CSV)", data=f"Festivos;{dif_dom:.2f}\nFestivos;{dif_fes:.2f}\nTotal;{(dif_dom+dif_fes):.2f}", file_name="festivos.csv")
+            txt_fes = f"RESUMEN FESTIVOS - {st.session_state.nombre}\nAtraso Domingos: {dif_dom:.2f} EUR\nAtraso Festivos: {dif_fes:.2f} EUR\nTOTAL: {(dif_dom+dif_fes):.2f} EUR"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_fes, file_name="festivos.txt")
 
 elif st.session_state.seccion == 'subida':
     st.markdown(f'<p class="titulo">📈 PROYECCIÓN: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -164,9 +165,10 @@ elif st.session_state.seccion == 'subida':
 
         c1, c2 = st.columns(2)
         with c1: 
-            if st.button("🏠 VOLVER AL MENÚ", key="sub_h"): st.session_state.seccion = 'menu'; st.rerun()
+            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="sub_h"): st.session_state.seccion = 'menu'; st.rerun()
         with c2:
-            st.download_button("💾 IMPRIMIR (CSV)", data=f"Con Subida;{total_con_subida:.2f}\nSin Subida;{total_sin_subida:.2f}", file_name="subida.csv")
+            txt_subida = f"RESUMEN PROYECCIÓN - {st.session_state.nombre}\nTotal con subidas: {total_con_subida:.2f} EUR\nTotal sin subidas: {total_sin_subida:.2f} EUR"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_subida, file_name="subida.txt")
 
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -197,9 +199,10 @@ elif st.session_state.seccion == 'atrasos':
         
         c1, c2 = st.columns(2)
         with c1: 
-            if st.button("🏠 VOLVER AL MENÚ", key="atr_h"): st.session_state.seccion = 'menu'; st.rerun()
+            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="atr_h"): st.session_state.seccion = 'menu'; st.rerun()
         with c2:
-            st.download_button("💾 IMPRIMIR (CSV)", data=f"Atrasos hasta {mes_hasta};{total_atrasos:.2f}", file_name="atrasos.csv")
+            txt_atr = f"RESUMEN ATRASOS - {st.session_state.nombre}\nMes hasta: {mes_hasta}\nTotal Atrasos: {total_atrasos:.2f} EUR"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name="atrasos.txt")
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
