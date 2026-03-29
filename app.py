@@ -88,6 +88,12 @@ elif st.session_state.seccion == 'festivos':
                 <div class="pago-mano" style="font-size:20px;">TOTAL: {(dif_dom + dif_fes):,.2f} € bruto</div>
             </div>
         """, unsafe_allow_html=True)
+        
+        c1, c2 = st.columns(2)
+        with c1: 
+            if st.button("🏠 VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
+        with c2:
+            st.download_button("💾 IMPRIMIR (CSV)", data=f"Festivos;{dif_dom:.2f}\nFestivos;{dif_fes:.2f}\nTotal;{(dif_dom+dif_fes):.2f}", file_name="festivos.csv")
 
 elif st.session_state.seccion == 'subida':
     st.markdown(f'<p class="titulo">📈 PROYECCIÓN: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -113,10 +119,8 @@ elif st.session_state.seccion == 'subida':
             tramos_anio = TRAMOS_BASE[cat].copy()
             factor_tramos = (1.03 ** (anio - 2026))
             ult_tramo_aj = tramos_anio[-1] * factor_tramos * f_j
-            
             sal_fijo = (p_prev * h_an_new) * fijo
             n_anual, p_u = 0, 0.0
-            
             if sal_fijo >= (ult_tramo_aj - 0.01):
                 n_anual, p_u = sal_fijo, (p_prev * h_ref) * mano_pct
             else:
@@ -124,7 +128,6 @@ elif st.session_state.seccion == 'subida':
                 for t in tramos_anio:
                     t_val = t * factor_tramos * f_j
                     if sal_fijo < t_val: n_anual = t_val; break
-            
             p_acum = n_anual / h_an_new
             m_prev, m_new = (p_prev * h_ref / pagas), (n_anual / pagas)
             inc = ((p_acum / p_prev) - 1) * 100
@@ -144,26 +147,26 @@ elif st.session_state.seccion == 'subida':
                     {f'<div class="pago-mano">💰 PAGO MANO ALZADA: {p_u:,.2f} €</div>' if p_u > 0 else ""}
                 </div>
             """, unsafe_allow_html=True)
-
-        # --- BOTONES FINALES DE ACCIÓN ---
+            
         st.markdown(f"""
             <div class="card-anio" style="border: 2px solid #3b82f6; background: #0f172a;">
                 <p class="titulo" style="font-size:18px; margin-bottom:10px;">📊 RESUMEN FINAL</p>
                 <div class="col-dato">
-                    <p class="label-dato">Total acumulado con subidas</p>
+                    <p class="label-dato">Total acumulado CON subidas</p>
                     <span class="val-new" style="color:#10b981;">{total_con_subida:,.2f} €</span>
+                </div>
+                <div class="col-dato">
+                    <p class="label-dato">Total acumulado SIN subidas</p>
+                    <span class="val-new" style="color:#94a3b8;">{total_sin_subida:,.2f} €</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🏠 VOLVER AL MENÚ", key="final_home"):
-                st.session_state.seccion = 'menu'
-                st.rerun()
-        with col2:
-            csv = f"Nombre;{st.session_state.nombre}\nTotal;{total_con_subida:.2f}"
-            st.download_button("💾 GRABAR DATOS (CSV)", data=csv, file_name=f"resumen_{st.session_state.nombre}.csv", mime="text/csv")
+        c1, c2 = st.columns(2)
+        with c1: 
+            if st.button("🏠 VOLVER AL MENÚ", key="sub_h"): st.session_state.seccion = 'menu'; st.rerun()
+        with c2:
+            st.download_button("💾 IMPRIMIR (CSV)", data=f"Con Subida;{total_con_subida:.2f}\nSin Subida;{total_sin_subida:.2f}", file_name="subida.csv")
 
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -188,12 +191,15 @@ elif st.session_state.seccion == 'atrasos':
                     <span class="val-old">Incremento por hora: {dif_hora:.4f} €</span>
                     <span class="val-new">Mensual estimado: {(dif_hora * h_mensuales):,.2f} €</span>
                 </div>
-                <div class="pago-mano" style="font-size:20px;">
-                    ATRASOS TOTALES ({mes_hasta}):<br>
-                    <span style="font-size:30px;">{total_atrasos:,.2f} €</span>
-                </div>
+                <div class="pago-mano" style="font-size:20px;">ATRASOS TOTALES ({mes_hasta}): {total_atrasos:,.2f} €</div>
             </div>
         """, unsafe_allow_html=True)
+        
+        c1, c2 = st.columns(2)
+        with c1: 
+            if st.button("🏠 VOLVER AL MENÚ", key="atr_h"): st.session_state.seccion = 'menu'; st.rerun()
+        with c2:
+            st.download_button("💾 IMPRIMIR (CSV)", data=f"Atrasos hasta {mes_hasta};{total_atrasos:.2f}", file_name="atrasos.csv")
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
