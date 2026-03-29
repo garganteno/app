@@ -23,7 +23,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- DATOS MAESTROS ---
+# --- DATOS MAESTROS (ORIGINALES RESTAURADOS) ---
 TRAMOS_BASE = {"Cajer@/Reponedor": [18800, 19800, 21000], "Asistent@ / Oficial": [21000, 22000, 23000], "Adjunt@": [25000, 27000, 29000], "Gt": [29500, 31000, 33600, 35000, 38200]}
 MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
@@ -129,7 +129,6 @@ elif st.session_state.seccion == 'subida':
             inc = ((p_acum / p_prev) - 1) * 100
             total_con_subida += (n_anual + p_u); total_sin_subida += (p_act * h_an_new)
 
-            # MODIFICACIÓN SOLICITADA: Incluir mensual y anual antiguo en el informe de texto
             txt_informe += f"\nAÑO {anio}:\n- Hora: {p_acum:.2f}€ (Ant: {p_prev:.2f}€)\n- Mensual: {m_new:,.2f}€ (Ant: {m_ant:,.2f}€)\n- Anual: {a_new:,.2f}€ (Ant: {a_ant:,.2f}€)\n"
             if p_u > 0: txt_informe += f"- Mano Alzada: {p_u:,.2f}€\n"
             txt_informe += "-"*20
@@ -198,7 +197,3 @@ elif st.session_state.seccion == 'atrasos':
             txt_atr += "="*45 + f"\nTOTAL: {total_atrasos:.2f} €"
             nom_arch = f"CalculoDeAtrasos{st.session_state.nombre.title().replace(' ', '')}.txt"
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name=nom_arch)
-
-elif st.session_state.seccion == 'salir':
-    st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
-    if st.button("VOLVER A ENTRAR"): st.session_state.seccion = 'menu'; st.rerun()
