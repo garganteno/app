@@ -90,10 +90,10 @@ elif st.session_state.seccion == 'festivos':
         """, unsafe_allow_html=True)
         
         c1, c2 = st.columns(2)
-        with c1: 
-            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="fes_h"): st.session_state.seccion = 'menu'; st.rerun()
+        with c1:
+            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="fes_final"): st.session_state.seccion = 'menu'; st.rerun()
         with c2:
-            txt_fes = f"RESUMEN FESTIVOS - {st.session_state.nombre}\nAtraso Domingos: {dif_dom:.2f} EUR\nAtraso Festivos: {dif_fes:.2f} EUR\nTOTAL: {(dif_dom+dif_fes):.2f} EUR"
+            txt_fes = f"INFORME DOMINGOS/FESTIVOS - {st.session_state.nombre}\n\nAtraso Domingos: {dif_dom:.2f} €\nAtraso Festivos: {dif_fes:.2f} €\nTOTAL BRUTO: {(dif_dom+dif_fes):.2f} €"
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_fes, file_name="festivos.txt")
 
 elif st.session_state.seccion == 'subida':
@@ -132,7 +132,7 @@ elif st.session_state.seccion == 'subida':
             p_acum = n_anual / h_an_new
             m_prev, m_new = (p_prev * h_ref / pagas), (n_anual / pagas)
             inc = ((p_acum / p_prev) - 1) * 100
-            total_con_subida += n_anual + p_u
+            total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
 
             st.markdown(f"""
@@ -162,13 +162,13 @@ elif st.session_state.seccion == 'subida':
                 </div>
             </div>
         """, unsafe_allow_html=True)
-
+        
         c1, c2 = st.columns(2)
-        with c1: 
-            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="sub_h"): st.session_state.seccion = 'menu'; st.rerun()
+        with c1:
+            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="sub_final"): st.session_state.seccion = 'menu'; st.rerun()
         with c2:
-            txt_subida = f"RESUMEN PROYECCIÓN - {st.session_state.nombre}\nTotal con subidas: {total_con_subida:.2f} EUR\nTotal sin subidas: {total_sin_subida:.2f} EUR"
-            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_subida, file_name="subida.txt")
+            resumen_txt = f"RESUMEN SUBIDA SALARIAL - {st.session_state.nombre}\n\nTOTAL ACUMULADO CON SUBIDAS: {total_con_subida:,.2f} €\nTOTAL ACUMULADO SIN SUBIDAS: {total_sin_subida:,.2f} €\nDIFERENCIA TOTAL: {(total_con_subida-total_sin_subida):,.2f} €"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=resumen_txt, file_name="resumen_subida.txt")
 
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -198,11 +198,11 @@ elif st.session_state.seccion == 'atrasos':
         """, unsafe_allow_html=True)
         
         c1, c2 = st.columns(2)
-        with c1: 
-            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="atr_h"): st.session_state.seccion = 'menu'; st.rerun()
+        with c1:
+            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="atr_final"): st.session_state.seccion = 'menu'; st.rerun()
         with c2:
-            txt_atr = f"RESUMEN ATRASOS - {st.session_state.nombre}\nMes hasta: {mes_hasta}\nTotal Atrasos: {total_atrasos:.2f} EUR"
-            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name="atrasos.txt")
+            txt_atrasos = f"RESUMEN ATRASOS - {st.session_state.nombre}\n\nMes calculado hasta: {mes_hasta}\nTOTAL ATRASOS: {total_atrasos:.2f} €"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atrasos, file_name="atrasos.txt")
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
