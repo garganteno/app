@@ -4,7 +4,7 @@ from datetime import datetime
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29 Pro", layout="centered")
 
-# ESTILO DE ALTO IMPACTO (RESTAURADO E ÍNTEGRO)
+# ESTILO DE ALTO IMPACTO
 st.markdown("""
     <style>
     [data-testid="stHeader"], [data-testid="stToolbar"], header, footer { display: none !important; visibility: hidden !important; }
@@ -24,7 +24,12 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- DATOS MAESTROS ---
-TRAMOS_BASE = {"Cajer@/Reponedor": [18800, 19800, 21000], "Asistent@ / Oficial": [21000, 22000, 23000], "Adjunt@": [25000, 27000, 29000], "Gt": [29500, 31000, 33600, 35000, 38200]}
+TRAMOS_BASE = {
+    "Cajer@/Reponedor": [18800, 19800, 21000], 
+    "Asistent@ / Oficial": [21000, 22000, 23000], 
+    "Adjunt@": [25000, 27000, 29000], 
+    "Gt": [29500, 31000, 33600, 35000, 38200]
+}
 MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
 if 'seccion' not in st.session_state: st.session_state.seccion = 'menu'
@@ -123,18 +128,28 @@ elif st.session_state.seccion == 'subida':
             h_ref = h_an_ant if anio == 2026 else h_an_new
             p_prev = p_acum
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
-            tramos_anio = TRAMOS_BASE[cat].copy()
-            factor_tramos = (1.03 ** (anio - 2026))
-            ult_tramo_aj = tramos_anio[-1] * factor_tramos * f_j
+            
+            # --- LÓGICA DE TRAMOS MODIFICADA ---
+            tramos_actuales = TRAMOS_BASE[cat].copy()
+            # El último tramo sube un 3% anual solo a partir de 2027
+            if anio >= 2027:
+                factor_ultimo_tramo = (1.03 ** (anio - 2026))
+                tramos_actuales[-1] = tramos_actuales[-1] * factor_ultimo_tramo
+            
+            ult_tramo_aj = tramos_actuales[-1] * f_j
             sal_fijo = (p_prev * h_an_new) * fijo
             n_anual, p_u = 0, 0.0
+            
             if sal_fijo >= (ult_tramo_aj - 0.01):
-                n_anual, p_u = sal_fijo, (p_prev * h_ref) * mano_pct
+                n_anual = sal_fijo
+                p_u = (p_prev * h_ref) * mano_pct
             else:
                 n_anual = sal_fijo
-                for t in tramos_anio:
-                    t_val = t * factor_tramos * f_j
-                    if sal_fijo < t_val: n_anual = t_val; break
+                for t in tramos_actuales:
+                    t_val = t * f_j
+                    if sal_fijo < t_val: 
+                        n_anual = t_val
+                        break
             
             p_acum = n_anual / h_an_new
             m_ant = (p_prev * h_ref / pagas)
