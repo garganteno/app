@@ -54,7 +54,7 @@ if st.session_state.seccion == 'menu':
 
 elif st.session_state.seccion == 'festivos':
     st.markdown(f'<p class="titulo">📅 DESGLOSE DOM/FES: {st.session_state.nombre}</p>', unsafe_allow_html=True)
-    if st.button("⬅️ VOLVER"): st.session_state.seccion = 'menu'; st.rerun()
+    if st.button("⬅️ VOLVER AL MENÚ", key="up_fes"): st.session_state.seccion = 'menu'; st.rerun()
     with st.expander("⚙️ DATOS DE HORAS", expanded=True):
         cat_f = st.selectbox("Categoría Profesional", list(TRAMOS_BASE.keys()))
         p_ant_f = st.number_input("Precio Hora ANTIGUO (€)", value=10.00, format="%.2f")
@@ -89,16 +89,15 @@ elif st.session_state.seccion == 'festivos':
             </div>
         """, unsafe_allow_html=True)
         
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="fes_final"): st.session_state.seccion = 'menu'; st.rerun()
-        with c2:
-            txt_fes = f"INFORME DOMINGOS/FESTIVOS - {st.session_state.nombre}\n\nAtraso Domingos: {dif_dom:.2f} €\nAtraso Festivos: {dif_fes:.2f} €\nTOTAL BRUTO: {(dif_dom+dif_fes):.2f} €"
-            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_fes, file_name="festivos.txt")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("⬅️ VOLVER AL MENÚ", key="down_fes"): st.session_state.seccion = 'menu'; st.rerun()
+        with col2:
+            st.download_button("💾 IMPRIMIR (.TXT)", f"INFORME FESTIVOS - {st.session_state.nombre}\n\nAtraso Domingos: {dif_dom:.2f} €\nAtraso Festivos: {dif_fes:.2f} €\nTOTAL: {(dif_dom+dif_fes):.2f} €", "festivos.txt")
 
 elif st.session_state.seccion == 'subida':
     st.markdown(f'<p class="titulo">📈 PROYECCIÓN: {st.session_state.nombre}</p>', unsafe_allow_html=True)
-    if st.button("⬅️ VOLVER AL MENÚ", key="up"): st.session_state.seccion = 'menu'; st.rerun()
+    if st.button("⬅️ VOLVER AL MENÚ", key="up_sub"): st.session_state.seccion = 'menu'; st.rerun()
     with st.expander("⚙️ CONFIGURACIÓN", expanded=True):
         p_act = st.number_input("Precio Hora Actual (€)", value=10.00, format="%.2f")
         h_ant_i = st.number_input("Cómputo Semanal ACTUAL", value=40.0)
@@ -112,6 +111,7 @@ elif st.session_state.seccion == 'subida':
         f_j, p_acum = h_new_i / 40, p_act
         limite = 2029 if vista == "COMPLETO" else int(vista)
         total_con_subida, total_sin_subida = 0, 0
+        txt_informe = f"INFORME DE PROYECCIÓN SALARIAL - {st.session_state.nombre}\n" + "="*40 + "\n"
         
         for anio in range(2026, limite + 1):
             h_ref = h_an_ant if anio == 2026 else h_an_new
@@ -130,10 +130,14 @@ elif st.session_state.seccion == 'subida':
                     t_val = t * factor_tramos * f_j
                     if sal_fijo < t_val: n_anual = t_val; break
             p_acum = n_anual / h_an_new
-            m_prev, m_new = (p_prev * h_ref / pagas), (n_anual / pagas)
+            m_new = (n_anual / pagas)
             inc = ((p_acum / p_prev) - 1) * 100
             total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
+            
+            txt_informe += f"\nAÑO {anio}:\n- Precio Hora: {p_acum:.2f} €\n- Salario Mensual: {m_new:,.2f} €\n- Incremento: {inc:.2f}%"
+            if p_u > 0: txt_informe += f"\n- Pago Mano Alzada: {p_u:,.2f} €"
+            txt_informe += "\n" + "-"*20
 
             st.markdown(f"""
                 <div class="card-anio">
@@ -143,12 +147,14 @@ elif st.session_state.seccion == 'subida':
                     </div>
                     <div class="grid-datos">
                         <div class="col-dato"><p class="label-dato">Precio Hora</p><span class="val-old">Antes: {p_prev:.2f} €</span><span class="val-new">{p_acum:.2f} €</span></div>
-                        <div class="col-dato"><p class="label-dato">Mensual ({pagas} pagas)</p><span class="val-old">Antes: {m_prev:,.2f} €</span><span class="val-new">{m_new:,.2f} €</span></div>
+                        <div class="col-dato"><p class="label-dato">Mensual ({pagas} pagas)</p><span class="val-new">{m_new:,.2f} €</span></div>
                     </div>
                     {f'<div class="pago-mano">💰 PAGO MANO ALZADA: {p_u:,.2f} €</div>' if p_u > 0 else ""}
                 </div>
             """, unsafe_allow_html=True)
             
+        txt_informe += f"\n\nRESUMEN FINAL:\nTOTAL CON SUBIDAS: {total_con_subida:,.2f} €\nTOTAL SIN SUBIDAS: {total_sin_subida:,.2f} €\nDIFERENCIA A FAVOR: {(total_con_subida-total_sin_subida):,.2f} €"
+
         st.markdown(f"""
             <div class="card-anio" style="border: 2px solid #3b82f6; background: #0f172a;">
                 <p class="titulo" style="font-size:18px; margin-bottom:10px;">📊 RESUMEN FINAL</p>
@@ -163,16 +169,15 @@ elif st.session_state.seccion == 'subida':
             </div>
         """, unsafe_allow_html=True)
         
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="sub_final"): st.session_state.seccion = 'menu'; st.rerun()
-        with c2:
-            resumen_txt = f"RESUMEN SUBIDA SALARIAL - {st.session_state.nombre}\n\nTOTAL ACUMULADO CON SUBIDAS: {total_con_subida:,.2f} €\nTOTAL ACUMULADO SIN SUBIDAS: {total_sin_subida:,.2f} €\nDIFERENCIA TOTAL: {(total_con_subida-total_sin_subida):,.2f} €"
-            st.download_button("💾 IMPRIMIR (.TXT)", data=resumen_txt, file_name="resumen_subida.txt")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("⬅️ VOLVER AL MENÚ", key="down_sub"): st.session_state.seccion = 'menu'; st.rerun()
+        with col2:
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name="subida_salarial.txt")
 
 elif st.session_state.seccion == 'atrasos':
     st.markdown(f'<p class="titulo">💸 ATRASOS 2026: {st.session_state.nombre}</p>', unsafe_allow_html=True)
-    if st.button("⬅️ VOLVER AL MENÚ"): st.session_state.seccion = 'menu'; st.rerun()
+    if st.button("⬅️ VOLVER AL MENÚ", key="up_atr"): st.session_state.seccion = 'menu'; st.rerun()
     with st.expander("⚙️ CONFIGURACIÓN", expanded=True):
         p_ant_atr = st.number_input("Precio Hora 2025 (€)", value=10.00, format="%.2f")
         h_sem_atr = st.number_input("Horas Semanales", value=40.0)
@@ -197,12 +202,11 @@ elif st.session_state.seccion == 'atrasos':
             </div>
         """, unsafe_allow_html=True)
         
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("🏠 VOLVER AL MENÚ PRINCIPAL", key="atr_final"): st.session_state.seccion = 'menu'; st.rerun()
-        with c2:
-            txt_atrasos = f"RESUMEN ATRASOS - {st.session_state.nombre}\n\nMes calculado hasta: {mes_hasta}\nTOTAL ATRASOS: {total_atrasos:.2f} €"
-            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atrasos, file_name="atrasos.txt")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("⬅️ VOLVER AL MENÚ", key="down_atr"): st.session_state.seccion = 'menu'; st.rerun()
+        with col2:
+            st.download_button("💾 IMPRIMIR (.TXT)", f"INFORME ATRASOS - {st.session_state.nombre}\n\nMes hasta: {mes_hasta}\nTotal Atrasos: {total_atrasos:.2f} €", "atrasos.txt")
 
 elif st.session_state.seccion == 'salir':
     st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
