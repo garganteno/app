@@ -4,7 +4,7 @@ from datetime import datetime
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29 Pro", layout="centered")
 
-# ESTILO DE ALTO IMPACTO (RESTAURADO)
+# ESTILO DE ALTO IMPACTO (RESTAURADO E ÍNTEGRO)
 st.markdown("""
     <style>
     [data-testid="stHeader"], [data-testid="stToolbar"], header, footer { display: none !important; visibility: hidden !important; }
@@ -24,7 +24,12 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- DATOS MAESTROS ---
-TRAMOS_BASE = {"Cajer@/Reponedor": [18800, 19800, 21000], "Asistent@ / Oficial": [21000, 22000, 23000], "Adjunt@": [25000, 27000, 29000], "Gt": [29500, 31000, 33600, 35000, 38200]}
+TRAMOS_BASE = {
+    "Cajer@/Reponedor": [18800, 19800, 21000], 
+    "Asistent@ / Oficial": [21000, 22000, 23000], 
+    "Adjunt@": [25000, 27000, 29000], 
+    "Gt": [29500, 31000, 33600, 35000, 38200]
+}
 MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
 if 'seccion' not in st.session_state: st.session_state.seccion = 'menu'
@@ -58,16 +63,17 @@ elif st.session_state.seccion == 'festivos':
     with st.expander("⚙️ DATOS DE HORAS", expanded=True):
         cat_f = st.selectbox("Categoría Profesional", list(TRAMOS_BASE.keys()))
         p_ant_f = st.number_input("Precio Hora ANTIGUO (€)", value=10.00, format="%.2f")
-        # ELIMINADO EL CÓMPUTO SEMANAL POR PETICIÓN
         h_dom = st.number_input("Horas DOMINGOS", value=0.0)
         h_fes = st.number_input("Horas FESTIVOS", value=0.0)
 
     if st.button("🚀 CALCULAR DESGLOSE"):
-        # Se asume 40h para el motor en festivos al no pedir el cómputo semanal
         p_new_f = motor_2026(p_ant_f, 40.0, cat_f)
-        p_h_dom_ant = (50.0 / 8) if "Cajer" in cat_f else (60.0 / 8)
+        # Lógica Domingos: Base + Plus (50 o 60) por cada 8h
+        plus_8h = 50.0 if "Cajer" in cat_f else 60.0
+        p_h_dom_ant = p_ant_f + (plus_8h / 8)
         p_h_dom_new = p_new_f * 2
         dif_dom = (p_h_dom_new - p_h_dom_ant) * h_dom
+        # Festivos: 1.5 sobre base
         p_h_fes_ant = p_ant_f * 1.5
         p_h_fes_new = p_new_f * 1.5
         dif_fes = (p_h_fes_new - p_h_fes_ant) * h_fes
@@ -76,14 +82,14 @@ elif st.session_state.seccion == 'festivos':
             <div class="card-anio">
                 <p class="label-dato">Desglose Domingos</p>
                 <div class="col-dato">
-                    <span class="val-old">Precio antiguo: {p_h_dom_ant:.2f} €/h</span>
-                    <span class="val-new">Precio nuevo (x2): {p_h_dom_new:.2f} €/h</span>
+                    <span class="val-old">Precio antiguo (Base + Plus): {p_h_dom_ant:.2f} €/h</span>
+                    <span class="val-new">Precio nuevo (Base x 2): {p_h_dom_new:.2f} €/h</span>
                     <span style="color:#10b981; font-weight:bold;">Atraso Dom: {dif_dom:,.2f} €</span>
                 </div>
                 <p class="label-dato">Desglose Festivos</p>
                 <div class="col-dato">
-                    <span class="val-old">Precio antiguo (1.5): {p_h_fes_ant:.2f} €/h</span>
-                    <span class="val-new">Precio nuevo (1.5): {p_h_fes_new:.2f} €/h</span>
+                    <span class="val-old">Precio antiguo (x1.5): {p_h_fes_ant:.2f} €/h</span>
+                    <span class="val-new">Precio nuevo (x1.5): {p_h_fes_new:.2f} €/h</span>
                     <span style="color:#10b981; font-weight:bold;">Atraso Fes: {dif_fes:,.2f} €</span>
                 </div>
                 <div class="pago-mano" style="font-size:20px;">TOTAL: {(dif_dom + dif_fes):,.2f} € bruto</div>
@@ -94,7 +100,8 @@ elif st.session_state.seccion == 'festivos':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_fes"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            st.download_button("💾 IMPRIMIR (.TXT)", f"INFORME FESTIVOS - {st.session_state.nombre}\n\nAtraso Domingos: {dif_dom:.2f} €\nAtraso Festivos: {dif_fes:.2f} €\nTOTAL: {(dif_dom+dif_fes):.2f} €", "festivos.txt")
+            txt_fes = f"INFORME FESTIVOS - {st.session_state.nombre}\n\nAtraso Domingos: {dif_dom:.2f} EUR\nAtraso Festivos: {dif_fes:.2f} EUR\nTOTAL: {(dif_dom+dif_fes):.2f} EUR"
+            st.download_button("💾 IMPRIMIR (.TXT)", data=txt_fes, file_name="festivos.txt")
 
 elif st.session_state.seccion == 'subida':
     st.markdown(f'<p class="titulo">📈 PROYECCIÓN: {st.session_state.nombre}</p>', unsafe_allow_html=True)
@@ -154,8 +161,6 @@ elif st.session_state.seccion == 'subida':
                 </div>
             """, unsafe_allow_html=True)
             
-        txt_informe += f"\n\nRESUMEN FINAL:\nTOTAL CON SUBIDAS: {total_con_subida:,.2f} €\nTOTAL SIN SUBIDAS: {total_sin_subida:,.2f} €\nDIFERENCIA A FAVOR: {(total_con_subida-total_sin_subida):.2f} €"
-
         st.markdown(f"""
             <div class="card-anio" style="border: 2px solid #3b82f6; background: #0f172a;">
                 <p class="titulo" style="font-size:18px; margin-bottom:10px;">📊 RESUMEN FINAL</p>
@@ -174,6 +179,7 @@ elif st.session_state.seccion == 'subida':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_sub"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
+            txt_informe += f"\n\nRESUMEN FINAL:\nTOTAL CON SUBIDAS: {total_con_subida:,.2f} €\nTOTAL SIN SUBIDAS: {total_sin_subida:,.2f} €"
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name="subida_salarial.txt")
 
 elif st.session_state.seccion == 'atrasos':
