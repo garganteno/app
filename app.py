@@ -58,12 +58,13 @@ elif st.session_state.seccion == 'festivos':
     with st.expander("⚙️ DATOS DE HORAS", expanded=True):
         cat_f = st.selectbox("Categoría Profesional", list(TRAMOS_BASE.keys()))
         p_ant_f = st.number_input("Precio Hora ANTIGUO (€)", value=10.00, format="%.2f")
-        h_sem_f = st.number_input("Cómputo Semanal ACTUAL", value=40.0)
+        # ELIMINADO EL CÓMPUTO SEMANAL POR PETICIÓN
         h_dom = st.number_input("Horas DOMINGOS", value=0.0)
         h_fes = st.number_input("Horas FESTIVOS", value=0.0)
 
     if st.button("🚀 CALCULAR DESGLOSE"):
-        p_new_f = motor_2026(p_ant_f, h_sem_f, cat_f)
+        # Se asume 40h para el motor en festivos al no pedir el cómputo semanal
+        p_new_f = motor_2026(p_ant_f, 40.0, cat_f)
         p_h_dom_ant = (50.0 / 8) if "Cajer" in cat_f else (60.0 / 8)
         p_h_dom_new = p_new_f * 2
         dif_dom = (p_h_dom_new - p_h_dom_ant) * h_dom
@@ -153,7 +154,7 @@ elif st.session_state.seccion == 'subida':
                 </div>
             """, unsafe_allow_html=True)
             
-        txt_informe += f"\n\nRESUMEN FINAL:\nTOTAL CON SUBIDAS: {total_con_subida:,.2f} €\nTOTAL SIN SUBIDAS: {total_sin_subida:,.2f} €\nDIFERENCIA A FAVOR: {(total_con_subida-total_sin_subida):,.2f} €"
+        txt_informe += f"\n\nRESUMEN FINAL:\nTOTAL CON SUBIDAS: {total_con_subida:,.2f} €\nTOTAL SIN SUBIDAS: {total_sin_subida:,.2f} €\nDIFERENCIA A FAVOR: {(total_con_subida-total_sin_subida):.2f} €"
 
         st.markdown(f"""
             <div class="card-anio" style="border: 2px solid #3b82f6; background: #0f172a;">
