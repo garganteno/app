@@ -118,11 +118,13 @@ elif st.session_state.seccion == 'subida':
         limite = 2029 if vista == "COMPLETO" else int(vista)
         total_con_subida, total_sin_subida = 0, 0
         txt_informe = f"INFORME PROYECCIÓN - {st.session_state.nombre}\n"
+        txt_informe += "="*45 + "\n"
         
         for anio in range(2026, limite + 1):
             h_ref = h_an_ant if anio == 2026 else h_an_new
             p_prev = p_acum
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
+            
             tramos_actuales = TRAMOS_BASE[cat].copy()
             if anio >= 2027:
                 factor_ultimo_tramo = (1.03 ** (anio - 2026))
@@ -147,7 +149,13 @@ elif st.session_state.seccion == 'subida':
             total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
             
-            txt_informe += f"\nAÑO {anio}: {p_acum:.2f}€/h | Anual: {a_new:,.2f}€"
+            # MODIFICACIÓN: Incluir precio antiguo en el TXT
+            txt_informe += f"\nAÑO {anio}:\n"
+            txt_informe += f"- Precio Hora: {p_acum:.2f} € (Antes: {p_prev:.2f} €)\n"
+            txt_informe += f"- Salario Mensual: {m_new:,.2f} €\n"
+            txt_informe += f"- Salario Anual:   {a_new:,.2f} €\n"
+            if p_u > 0: txt_informe += f"- Mano Alzada:    {p_u:,.2f} €\n"
+            txt_informe += "-"*20
 
             st.markdown(f"""
                 <div class="card-anio">
@@ -176,7 +184,9 @@ elif st.session_state.seccion == 'subida':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_sub"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            txt_informe += f"\n\nRESUMEN FINAL:\nTotal con Subida: {total_con_subida:,.2f}€\nTotal sin Subida: {total_sin_subida:,.2f}€"
+            txt_informe += f"\n\nRESUMEN FINAL:\n"
+            txt_informe += f"Total con Subida: {total_con_subida:,.2f} €\n"
+            txt_informe += f"Total sin Subida: {total_sin_subida:,.2f} €"
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_informe, file_name="subida.txt")
 
 elif st.session_state.seccion == 'atrasos':
@@ -192,7 +202,6 @@ elif st.session_state.seccion == 'atrasos':
         p_nuevo_atr = motor_2026(p_ant_atr, h_sem_atr, cat_atr)
         dif_hora = p_nuevo_atr - p_ant_atr
         h_mensuales = h_sem_atr * 4.33
-        
         idx_final = MESES.index(mes_hasta)
         meses_calculados = MESES[:idx_final+1]
         total_atrasos = dif_hora * h_mensuales * len(meses_calculados)
@@ -212,20 +221,16 @@ elif st.session_state.seccion == 'atrasos':
         with col1:
             if st.button("⬅️ VOLVER AL MENÚ", key="down_atr"): st.session_state.seccion = 'menu'; st.rerun()
         with col2:
-            # DESGLOSE POR MESES EN EL ARCHIVO TXT
             txt_atr = f"INFORME DESGLOSADO DE ATRASOS - {st.session_state.nombre}\n"
             txt_atr += "="*45 + "\n"
             txt_atr += f"Precio Hora Anterior: {p_ant_atr:.2f} €\n"
             txt_atr += f"Precio Hora Nuevo:    {p_nuevo_atr:.2f} €\n"
             txt_atr += f"Diferencia/Hora:      {dif_hora:.4f} €\n"
             txt_atr += "-"*45 + "\n"
-            
             for m in meses_calculados:
                 txt_atr += f"- {m}: {(dif_hora * h_mensuales):.2f} €\n"
-            
             txt_atr += "="*45 + "\n"
             txt_atr += f"TOTAL ATRASOS: {total_atrasos:.2f} €\n"
-            
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name="atrasos_desglosados.txt")
 
 elif st.session_state.seccion == 'salir':
