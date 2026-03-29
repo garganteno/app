@@ -1,4 +1,4 @@
-import streamlit st
+import streamlit as st
 from datetime import datetime
 
 # 1. Configuración de página
@@ -137,8 +137,8 @@ elif st.session_state.seccion == 'subida':
                     if sal_fijo < t_val: n_anual = t_val; break
             
             p_acum = n_anual / h_an_new
-            m_ant = (p_prev * h_ref / pagas) # Salario mensual antiguo del tramo anterior
-            m_new = (n_anual / pagas)       # Salario mensual nuevo
+            m_ant = (p_prev * h_ref / pagas)
+            m_new = (n_anual / pagas)
             inc = ((p_acum / p_prev) - 1) * 100
             total_con_subida += (n_anual + p_u)
             total_sin_subida += (p_act * h_an_new)
