@@ -4,7 +4,7 @@ from datetime import datetime
 # 1. Configuración de página
 st.set_page_config(page_title="Gestor Convenio 26-29 Pro", layout="centered")
 
-# ESTILO DE ALTO IMPACTO (RESTAURADO)
+# ESTILO DE ALTO IMPACTO
 st.markdown("""
     <style>
     [data-testid="stHeader"], [data-testid="stToolbar"], header, footer { display: none !important; visibility: hidden !important; }
@@ -23,7 +23,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- DATOS MAESTROS (ORIGINALES RESTAURADOS) ---
+# --- DATOS MAESTROS ---
 TRAMOS_BASE = {"Cajer@/Reponedor": [18800, 19800, 21000], "Asistent@ / Oficial": [21000, 22000, 23000], "Adjunt@": [25000, 27000, 29000], "Gt": [29500, 31000, 33600, 35000, 38200]}
 MESES = ["Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
@@ -110,12 +110,18 @@ elif st.session_state.seccion == 'subida':
             p_prev = p_acum
             fijo, mano_pct = (1.04, 0.02) if anio == 2026 else (1.03, 0.015)
             
+            # --- LÓGICA DE TRAMOS ---
             tramos = TRAMOS_BASE[cat].copy()
-            ult_tramo_fijo = tramos[-1] * f_j
+            # SOLO incrementa el último tramo a partir de 2027
+            if anio >= 2027:
+                tramos[-1] *= (1.03 ** (anio - 2026))
+            
+            ult_tramo_aj = tramos[-1] * f_j
             sal_fijo = (p_prev * h_an_new) * fijo
             n_anual, p_u = 0, 0.0
             
-            if sal_fijo >= (ult_tramo_fijo - 0.01):
+            # REGLA MANO ALZADA: Solo si rebasas el último tramo
+            if sal_fijo >= (ult_tramo_aj - 0.01):
                 n_anual = sal_fijo
                 p_u = (p_prev * h_ref) * mano_pct
             else:
@@ -197,3 +203,7 @@ elif st.session_state.seccion == 'atrasos':
             txt_atr += "="*45 + f"\nTOTAL: {total_atrasos:.2f} €"
             nom_arch = f"CalculoDeAtrasos{st.session_state.nombre.title().replace(' ', '')}.txt"
             st.download_button("💾 IMPRIMIR (.TXT)", data=txt_atr, file_name=nom_arch)
+
+elif st.session_state.seccion == 'salir':
+    st.markdown('<p class="titulo">👋 ¡HASTA PRONTO!</p>', unsafe_allow_html=True)
+    if st.button("VOLVER A ENTRAR"): st.session_state.seccion = 'menu'; st.rerun()
